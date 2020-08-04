@@ -155,6 +155,7 @@ Installation Instructions
 ------
 
 Install openpilot on a EON by entering ``https://openpilot.comma.ai`` during the installer setup.
+https://community.comma.ai/wiki/index.php/Volkswagen#Installing_the_Community_Port
 
 Follow this [video instructions](https://youtu.be/3nlkomHathI) to properly mount the EON on the windshield. Note: openpilot features an automatic pose calibration routine and openpilot performance should not be affected by small pitch and yaw misalignments caused by imprecise EON mounting.
 
