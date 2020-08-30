@@ -1,7 +1,7 @@
 from cereal import car
 from selfdrive.swaglog import cloudlog
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
-from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, NWL, TRANS, GEAR
+from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, NWL, TRANS, GEAR, MQB_CARS, PQ_CARS
 from common.params import Params
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -24,54 +24,83 @@ class CarInterface(CarInterfaceBase):
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
-    if candidate == CAR.GENERICMQB:
-      # Set common MQB parameters that will apply globally
+    # Set global default parameters
+    ret.radarOffCan = False
+    ret.enableCamera = True  # Stock camera detection doesn't apply to VW
+    ret.steerRateCost = 1.0
+    ret.steerActuatorDelay = 0.05  # Hopefully all racks are similar here
+    ret.steerLimitTimer = 0.4
+
+    # Override these per-car as necessary
+    ret.lateralTuning.pid.kpBP = [0.]
+    ret.lateralTuning.pid.kiBP = [0.]
+    ret.lateralTuning.pid.kpV = [0.6]
+    ret.lateralTuning.pid.kiV = [0.2]
+    ret.lateralTuning.pid.kf = 0.00006
+
+    # PER-PLATFORM PARAMETERS - DO NOT EDIT HERE TO TUNE INDIVIDUAL VEHICLES
+
+    if candidate in MQB_CARS:
+      # Configurations shared between all MQB vehicles
       ret.carName = "volkswagen"
-      ret.radarOffCan = True
       ret.safetyModel = car.CarParams.SafetyModel.volkswagen
 
-      # Additional common MQB parameters that may be overridden per-vehicle
-      ret.steerRateCost = 1.0
-      ret.steerActuatorDelay = 0.1  # Hopefully all MQB racks are similar here
-      ret.steerLimitTimer = 0.4
+      # Determine installed network location and trans type from fingerprint
+      ret.networkLocation = NWL.fwdCamera if 0x122 in fingerprint[0] else NWL.gateway
+      if 0xAD in fingerprint[0]:  # Getriebe_11
+        ret.transmissionType = TRANS.automatic
+      elif 0x187 in fingerprint[0]:  # EV_Gearshift
+        ret.transmissionType = TRANS.direct
+      else:  # No trans at all
+        ret.transmissionType = TRANS.manual
 
-      ret.lateralTuning.pid.kpBP = [0.]
-      ret.lateralTuning.pid.kiBP = [0.]
+    elif candidate in PQ_CARS:
+      # Configurations shared between all PQ35/PQ46/NMS vehicles
+      ret.carName = "volkswagen"
+      ret.safetyModel = car.CarParams.SafetyModel.volkswagenPq
+      # Determine installed network location and trans type from fingerprint
+      ret.networkLocation = NWL.fwdCamera if 0x368 in fingerprint[0] else NWL.gateway
+      if 0x440 in fingerprint[0]:  # Getriebe_1
+        ret.transmissionType = TRANS.automatic
+      else:  # No trans at all
+        ret.transmissionType = TRANS.manual
 
-      # FIXME: Per-vehicle parameters need to be reintegrated.
-      # Until that time, defaulting to VW Golf Mk7 as a baseline.
+    cloudlog.warning("Detected network location: %s", ret.networkLocation)
+    cloudlog.warning("Detected transmission type: %s", ret.transmissionType)
 
-      ret.mass = 1500 + STD_CARGO_KG
+    # PER-VEHICLE PARAMETERS - EDIT HERE TO TUNE INDIVIDUAL VEHICLES
+
+    if candidate == CAR.GENERICMQB:
+      # FIXME: Defaulting to VW Golf Mk7 as a baseline.
+      ret.mass = 1500 + STD_CARGO_KG  # Average, varies on trim/package
       ret.wheelbase = 2.64
-      ret.centerToFront = ret.wheelbase * 0.45
+      ret.centerToFront = ret.wheelbase * 0.45  # Estimated
       ret.steerRatio = 15.6
-      ret.lateralTuning.pid.kf = 0.00006
-      ret.lateralTuning.pid.kpV = [0.6]
-      ret.lateralTuning.pid.kiV = [0.2]
       tire_stiffness_factor = 1.0
 
-    ret.enableCamera = True  # Stock camera detection doesn't apply to VW
-    ret.transmissionType = car.CarParams.TransmissionType.automatic
+    elif candidate == CAR.GENERICPQ:
+      ret.mass = 1300 + STD_CARGO_KG  # Average, varies on trim/package
+      ret.wheelbase = 2.58
+      ret.centerToFront = ret.wheelbase * 0.45  # Estimated
+      ret.steerRatio = 16.4
+      tire_stiffness_factor = 1.0
 
-    # Determine installed network location by finding the ACC_06 radar message
-    if 0x122 in fingerprint[0]:
-      ret.networkLocation = NWL.fwdCamera
-    else:
-      ret.networkLocation = NWL.gateway
+      # OP LONG parameters
+      ret.gasMaxBP = [0.]  # m/s
+      ret.gasMaxV = [1]  # max gas allowed
+      ret.brakeMaxBP = [5., 20.]  # m/s
+      ret.brakeMaxV = [1., 0.8]  # max brake allowed
+      ret.openpilotLongitudinalControl = True
+      ret.longitudinalTuning.deadzoneBP = [0.]
+      ret.longitudinalTuning.deadzoneV = [0.]
+      ret.longitudinalTuning.kpBP = [0., 5., 35.]
+      ret.longitudinalTuning.kpV = [2.0, 1.4, 0.9]
+      ret.longitudinalTuning.kiBP = [0., 35.]
+      ret.longitudinalTuning.kiV = [0.32, 0.22]
 
-    # Determine transmission type by CAN message(s) present on the bus
-    if 0xAD in fingerprint[0]:
-      # Getribe_11 message detected: traditional automatic or DSG gearbox
-      ret.transmissionType = TRANS.automatic
-    elif 0x187 in fingerprint[0]:
-      # EV_Gearshift message detected: e-Golf or similar direct-drive electric
-      ret.transmissionType = TRANS.direct
-    else:
-      # No trans message at all, must be a true stick-shift manual
-      ret.transmissionType = TRANS.manual
-
-    cloudlog.warning("Detected network location: %r", ret.networkLocation)
-    cloudlog.warning("Detected transmission type: %r", ret.transmissionType)
+      ret.stoppingControl = True
+      ret.directAccelControl = False
+      ret.startAccel = 0.0
 
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase
