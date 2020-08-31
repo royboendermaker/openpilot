@@ -79,7 +79,7 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 1.0
 
     elif candidate == CAR.GENERICPQ:
-      ret.mass = 1300 + STD_CARGO_KG  # Average, varies on trim/package
+      ret.mass = 1500 + STD_CARGO_KG  # Average, varies on trim/package
       ret.wheelbase = 2.58
       ret.centerToFront = ret.wheelbase * 0.45  # Estimated
       ret.steerRatio = 16.4
