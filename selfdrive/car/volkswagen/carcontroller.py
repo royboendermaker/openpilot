@@ -44,8 +44,8 @@ class CarController():
     if (frame % 100) == 0:
         if enabled:
             self.pqCounter += 1
-    if self.pqCounter == 300:
-        events.add(car.CarEvent.EventName.steerTempUnavailable)
+    if self.pqCounter == 10:
+        events.add(car.CarEvent.EventName.pqTimebombWarn)
     if not enabled:
         self.pqCounter = 0
       
