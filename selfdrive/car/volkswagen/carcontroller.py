@@ -34,12 +34,21 @@ class CarController():
     self.graMsgSentCount = 0
     self.graMsgStartFramePrev = 0
     self.graMsgBusCounterPrev = 0
+    self.pqCounter = 0
 
     self.steer_rate_limited = False
 
   def update(self, enabled, CS, frame, actuators, visual_alert, audible_alert, leftLaneVisible, rightLaneVisible):
     """ Controls thread """
-
+    
+    if (frame % 100) == 0:
+        if enabled:
+            self.pqCounter += 1
+    if self.pqCounter == 300:
+        events.add(car.CarEvent.EventName.steerTempUnavailable)
+    if not enabled:
+        self.pqCounter = 0
+      
     P = CarControllerParams
 
     # Send CAN commands.
