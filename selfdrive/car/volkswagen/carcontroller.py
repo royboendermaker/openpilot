@@ -44,7 +44,7 @@ class CarController():
     if (frame % 100) == 0:
         if not enabled:
             self.pqCounter += 1
-    if self.pqCounter == 10:
+    if self.pqCounter == 100:
         events.add(car.CarEvent.EventName.pqTimebombWarn)
     if not enabled:
         self.pqCounter = 0
