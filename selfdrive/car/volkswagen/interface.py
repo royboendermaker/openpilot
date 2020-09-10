@@ -165,7 +165,7 @@ class CarInterface(CarInterfaceBase):
     if (self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
-      if self.pqCounter >= 10: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter >= 300: #time in seconds until counter threshold for pqTimebombWarn alert
         events.append(create_event('pqTimebombWarn', [ET.WARNING]))
         print("pqTimebombWarnSTATUS:")
       if not ret.cruiseState.enabled:
