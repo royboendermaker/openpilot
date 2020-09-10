@@ -105,7 +105,7 @@ ALERTS = [
       "pqTimebombWarn",
       "WARNING",
       "EPS Timebomb imminent",
-      AlertStatus.userPrompt, AlertSize.mid,
+      AlertStatus.normal, AlertSize.mid,
       Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., 3.),
 
   Alert(
