@@ -169,6 +169,7 @@ class CarInterface(CarInterfaceBase):
         events.append(create_event('pqTimebombWarn', [ET.WARNING]))
       if ret.cruiseState.enabled:
         self.pqCounter = 0
+      print("Counter:", self.pqCounter)
 
     ret.events = events
     ret.buttonEvents = buttonEvents
