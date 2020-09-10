@@ -162,7 +162,7 @@ class CarInterface(CarInterfaceBase):
     elif not self.cruise_enabled_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
     
-    if (frame % 100) == 0:
+    if (self.frame % 100) == 0:
       if not ret.cruiseState.enabled:
         self.pqCounter += 1
       if self.pqCounter == 60: #time in seconds until counter threshold for pqTimebombWarn alert
