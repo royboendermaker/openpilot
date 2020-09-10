@@ -134,8 +134,8 @@ class CarInterface(CarInterfaceBase):
 
     # Update the EON metric configuration to match the car at first startup,
     # or if there's been a change.
-    if self.CS.displayMetricUnits != self.displayMetricUnitsPrev:
-      params.put("IsMetric", "1" if self.CS.displayMetricUnits else "0")
+    if true # self.CS.displayMetricUnits != self.displayMetricUnitsPrev:
+      params.put("IsMetric", "0") # if self.CS.displayMetricUnits else "0")
 
     # Check for and process state-change events (button press or release) from
     # the turn stalk switch or ACC steering wheel/control stalk buttons.
