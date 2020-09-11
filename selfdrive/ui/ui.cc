@@ -885,7 +885,7 @@ int main(int argc, char* argv[]) {
   float smooth_brightness = BRIGHTNESS_B;
 
   const int MIN_VOLUME = LEON ? 12 : 9;
-  const int MAX_VOLUME = LEON ? 15 : 12;
+  const int MAX_VOLUME = LEON ? 13 : 10;
 
   set_volume(MIN_VOLUME);
   s->volume_timeout = 5 * UI_FREQ;
