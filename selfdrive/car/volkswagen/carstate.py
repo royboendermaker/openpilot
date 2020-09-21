@@ -65,7 +65,7 @@ class CarState(CarStateBase):
 
     # Update gear and/or clutch position data.
     if trans_type == TRANS.automatic:
-      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["Getriebe_11"]['GE_Fahrstufe'], None))
+      ret.gearShifter = GEAR.drive # self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["Getriebe_11"]['GE_Fahrstufe'], None))
     elif trans_type == TRANS.direct:
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["EV_Gearshift"]['GearPosition'], None))
     elif trans_type == TRANS.manual:
