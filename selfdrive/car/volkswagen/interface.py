@@ -169,7 +169,7 @@ class CarInterface(CarInterfaceBase):
       if ret.cruiseState.enabled:
         self.pqCounter += 1
         print("pqCounter+1")
-      if self.pqCounter >= 330: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter >= 15: #time in seconds until counter threshold for pqTimebombWarn alert
         if not self.wheelGrabbed:
           events.append(create_event('pqTimebombWarn', [ET.WARNING]))
           print("Wheel not grabbed")
