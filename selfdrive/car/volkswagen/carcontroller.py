@@ -73,7 +73,6 @@ class CarController():
         
         if CS.out.stopSteering:
           apply_steer = 0
-          apply_steer_req = 0
 
         # FAULT AVOIDANCE: HCA must not be enabled for >360 seconds. Sending
         # a single frame with HCA disabled is an effective workaround.
