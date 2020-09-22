@@ -179,6 +179,7 @@ class CarInterface(CarInterfaceBase):
           if self.pqBypassCounter >= 3: #time alloted for bypass
             self.wheelGrabbed = False
             self.pqCounter = 0
+            self.pqBypassCounter = 0
             events.append(create_event('pqTimebombBypassed', [ET.WARNING]))
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
