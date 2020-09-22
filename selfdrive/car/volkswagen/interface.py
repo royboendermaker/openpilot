@@ -168,15 +168,19 @@ class CarInterface(CarInterfaceBase):
     if (self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
+        print("pqCounter+1")
       if self.pqCounter >= 330: #time in seconds until counter threshold for pqTimebombWarn alert
         if not self.wheelGrabbed:
           events.append(create_event('pqTimebombWarn', [ET.WARNING]))
+          print("Wheel not grabbed")
         if self.wheelGrabbed or ret.steeringPressed:
+          print("Wheel Grabbed! Adding +1 to pqBypassCounter")
           self.wheelGrabbed = True
           ret.stopSteering = True
           self.pqBypassCounter += 1
           events.append(create_event('pqTimebombBypassing', [ET.WARNING]))
           if self.pqBypassCounter >= 3: #time alloted for bypass
+            print("pqBypassCounter threshold met! Resuming OP steering")
             self.wheelGrabbed = False
             self.pqCounter = 0
             self.pqBypassCounter = 0
