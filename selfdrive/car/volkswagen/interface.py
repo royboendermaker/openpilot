@@ -17,7 +17,7 @@ class CarInterface(CarInterfaceBase):
     self.cp_acc = self.cp if CP.networkLocation == NWL.fwdCamera else self.cp_cam
     
     self.pqCounter = 0
-    ret.wheel_grabbed = False
+    self.wheelGrabbed = False
     self.pqBypassCounter = 0
 
   @staticmethod
@@ -163,18 +163,20 @@ class CarInterface(CarInterfaceBase):
     # Attempt OP engagement only on rising edge of stock ACC engagement.
     elif not self.cruise_enabled_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
-    
+
+    ret.stopSteering = False
     if (self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
       if self.pqCounter == 15: #time in seconds until counter threshold for pqTimebombWarn alert
         events.append(create_event('pqTimebombWarn', [ET.WARNING]))
-        if ret.wheel_grabbed or ret.steeringPressed:
-          ret.wheel_grabbed = True
+        if self.wheelGrabbed or ret.steeringPressed:
+          self.wheelGrabbed = True
+          ret.stopSteering = True
           self.pqBypassCounter += 1
           events.append(create_event('pqTimebombBypassing', [ET.WARNING]))
           if self.pqBypassCounter >= 3: #time alloted for bypass
-            ret.wheel_grabbed = False
+            self.wheelGrabbed = False
             self.pqCounter = 0
             events.append(create_event('pqTimebombBypassed', [ET.WARNING]))
       if not ret.cruiseState.enabled:
