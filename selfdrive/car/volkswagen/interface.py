@@ -17,7 +17,7 @@ class CarInterface(CarInterfaceBase):
     self.cp_acc = self.cp if CP.networkLocation == NWL.fwdCamera else self.cp_cam
     
     self.pqCounter = 0
-    self.wheel_grabbed = False
+    ret.wheel_grabbed = False
     self.pqBypassCounter = 0
 
   @staticmethod
@@ -167,14 +167,14 @@ class CarInterface(CarInterfaceBase):
     if (self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
-      if self.pqCounter == 330: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter == 15: #time in seconds until counter threshold for pqTimebombWarn alert
         events.append(create_event('pqTimebombWarn', [ET.WARNING]))
-        if self.wheel_grabbed or ret.steeringPressed:
-          self.wheel_grabbed = True
+        if ret.wheel_grabbed or ret.steeringPressed:
+          ret.wheel_grabbed = True
           self.pqBypassCounter += 1
           events.append(create_event('pqTimebombBypassing', [ET.WARNING]))
           if self.pqBypassCounter >= 3: #time alloted for bypass
-            self.wheel_grabbed = False
+            ret.wheel_grabbed = False
             self.pqCounter = 0
             events.append(create_event('pqTimebombBypassed', [ET.WARNING]))
       if not ret.cruiseState.enabled:
