@@ -45,7 +45,7 @@ class CarController():
     # Send CAN commands.
     can_sends = []
     
-    if ret.wheelGrabbed:
+    if ret.stopSteering:
       apply_steer = 0
       apply_steer_req = 0
 
