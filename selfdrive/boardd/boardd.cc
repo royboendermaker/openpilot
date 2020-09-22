@@ -130,6 +130,9 @@ void *safety_setter_thread(void *s) {
 
   capnp::FlatArrayMessageReader cmsg(amsg);
   cereal::CarParams::Reader car_params = cmsg.getRoot<cereal::CarParams>();
+  
+  LOGW("setting unsafe mode");
+  panda->set_unsafe_mode();
 
   int safety_model = int(car_params.getSafetyModel());
   auto safety_param = car_params.getSafetyParam();
