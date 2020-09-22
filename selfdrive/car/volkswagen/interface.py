@@ -165,7 +165,7 @@ class CarInterface(CarInterfaceBase):
       events.append(create_event('pcmEnable', [ET.ENABLE]))
 
     ret.stopSteering = False
-    #if (self.frame % 100) == 0:
+    if True: #(self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
       if self.pqCounter >= 15*100: #time in seconds until counter threshold for pqTimebombWarn alert
