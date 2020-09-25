@@ -88,6 +88,8 @@ int gas_interceptor_prev = 0;
 bool gas_pressed_prev = false;
 bool brake_pressed_prev = false;
 
+int unsafe_mode = 0;
+
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
