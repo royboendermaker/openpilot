@@ -18,7 +18,7 @@ class CarState(CarStateBase):
       self.get_cam_can_parser = self.get_pq_cam_can_parser
       self.update = self.update_pq
       if CP.transmissionType == TRANS.automatic:
-        self.shifter_values = GEAR.drive # can_define.dv["Getriebe_1"]['Waehlhebelposition__Getriebe_1_']
+        self.shifter_values = can_define.dv["Getriebe_1"]['Waehlhebelposition__Getriebe_1_']
     else:
       # Configure for MQB network messaging (default)
       self.get_can_parser = self.get_mqb_can_parser
@@ -54,7 +54,7 @@ class CarState(CarStateBase):
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["Motor_20"]['MO_Fahrpedalrohwert_01'] / 100.0
-    ret.gasPressed = false # ret.gas > 0
+    ret.gasPressed = ret.gas > 0
     ret.brake = pt_cp.vl["ESP_05"]['ESP_Bremsdruck'] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
     ret.brakePressed = bool(pt_cp.vl["ESP_05"]['ESP_Fahrer_bremst'])
     ret.brakeLights = bool(pt_cp.vl["ESP_05"]['ESP_Status_Bremsdruck'])
