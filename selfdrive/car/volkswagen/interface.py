@@ -181,7 +181,7 @@ class CarInterface(CarInterfaceBase):
           self.wheelGrabbed = True
           ret.stopSteering = True
           self.pqBypassCounter += 1
-          if self.pqBypassCounter >= 3*100: #time alloted for bypass
+          if self.pqBypassCounter >= 1.05*100: #time alloted for bypass
             self.wheelGrabbed = False
             self.pqCounter = 0
             self.pqBypassCounter = 0
