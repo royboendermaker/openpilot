@@ -177,7 +177,7 @@ class CarInterface(CarInterfaceBase):
             events.add(EventName.pqTimebombBypassed)
           else:
             events.add(EventName.pqTimebombBypassing)
-          if not ret.cruiseState.enabled:
+        if not ret.cruiseState.enabled:
             self.pqCounter = 0
     #PQTIMEBOMB STUFF END
 
