@@ -7,7 +7,6 @@ from selfdrive.car.interfaces import CarInterfaceBase
 
 EventName = car.CarEvent.EventName
 
-
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
     super().__init__(CP, CarController, CarState)
@@ -17,7 +16,8 @@ class CarInterface(CarInterfaceBase):
 
     # Set up an alias to PT/CAM parser for ACC depending on its detected network location
     self.cp_acc = self.cp if CP.networkLocation == NWL.fwdCamera else self.cp_cam
-    
+
+    # PQ timebomb bypass
     self.pqCounter = 0
     self.wheelGrabbed = False
     self.pqBypassCounter = 0
@@ -32,16 +32,19 @@ class CarInterface(CarInterfaceBase):
 
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
     ret.carName = "volkswagen"
-    ret.radarOffCan = True
+    ret.radarOffCan = False
 
     # Common default parameters that may be overridden per-vehicle
     ret.steerRateCost = 1.0
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
     ret.lateralTuning.pid.kf = 0.00006
-    ret.lateralTuning.pid.kpV = [0.6]
-    ret.lateralTuning.pid.kiV = [0.2]
+    ret.lateralTuning.pid.kpV = [0.3]
+    ret.lateralTuning.pid.kiV = [0.1]
     tire_stiffness_factor = 1.0
+
+    # Check for Comma Pedal
+    ret.enableGasInterceptor = True
 
     ret.lateralTuning.pid.kpBP = [0.]
     ret.lateralTuning.pid.kiBP = [0.]
@@ -83,29 +86,56 @@ class CarInterface(CarInterfaceBase):
       # FIXME: Per-vehicle parameters need to be reintegrated.
       ret.mass = 1375 + STD_CARGO_KG
       ret.wheelbase = 2.58
-      ret.centerToFront = ret.wheelbase * 0.45  # Estimated 
-      ret.steerRatio = 16.4 
+      ret.centerToFront = ret.wheelbase * 0.45  # Estimated
+      ret.steerRatio = 16.4
+
+      # OP LONG parameters (https://github.com/commaai/openpilot/wiki/Tuning#Tuning-the-longitudinal-PI-controller)
       
+      # !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
+      ret.gasMaxBP = [0., 1.]  # m/s
+      ret.gasMaxV = [0.3, 1.0]  # max gas allowed
+      # !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
+      ret.brakeMaxBP = [0.]  # m/s
+      ret.brakeMaxV = [1.]  # max brake allowed (positive number)
+      
+      ret.openpilotLongitudinalControl = True
+      
+      #!!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
+      ret.longitudinalTuning.deadzoneBP = [0.]  #m/s
+      ret.longitudinalTuning.deadzoneV = [0.]  # if control-loops (internal) error value is within +/- this value -> the error is set to 0.0
+      
+      # P value !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
+      ret.longitudinalTuning.kpBP = [0.]  # m/s
+      ret.longitudinalTuning.kpV = [0.95]
+      
+      # I value !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
+      ret.longitudinalTuning.kiBP = [0.]  # m/s
+      ret.longitudinalTuning.kiV = [0.12]
+
+
       # PQ lateral tuning HCA_Status 7
       ret.lateralTuning.pid.kpBP = [0., 14., 35.]
       ret.lateralTuning.pid.kiBP = [0., 14., 35.]
       ret.lateralTuning.pid.kpV = [0.12, 0.165, 0.185]
       ret.lateralTuning.pid.kiV = [0.09, 0.10, 0.11]
-      
+
+      ret.stoppingControl = True
+      ret.directAccelControl = False
+      ret.startAccel = 0.0
+
     # Determine installed network location: take a manually forced setting if
     # present, otherwise assume camera for C2/BP and gateway for white/grey Panda.
     # TODO: autodetect C2/BP gateway-side installation based on convenience/powertrain on CAN1
-    #params = Params()
-    #manual_network_location = params.get("ForceNetworkLocation", encoding='utf8')
-    #if manual_network_location == "camera":
-    #  ret.networkLocation = NWL.fwdCamera
-    #elif manual_network_location == "gateway":
-    #  ret.networkLocation = NWL.gateway
-    #elif has_relay:
-    #  ret.networkLocation = NWL.fwdCamera
-    #else:
-    #  ret.networkLocation = NWL.gateway
-    ret.networkLocation = NWL.gateway
+    params = Params()
+    manual_network_location = params.get("ForceNetworkLocation", encoding='utf8')
+    if manual_network_location == "camera":
+      ret.networkLocation = NWL.fwdCamera
+    elif manual_network_location == "gateway":
+      ret.networkLocation = NWL.gateway
+    elif has_relay:
+      ret.networkLocation = NWL.fwdCamera
+    else:
+      ret.networkLocation = NWL.gateway
 
     cloudlog.warning("Detected safety model: %s", ret.safetyModel)
     cloudlog.warning("Detected network location: %s", ret.networkLocation)
@@ -133,7 +163,7 @@ class CarInterface(CarInterfaceBase):
     self.cp_cam.update_strings(can_strings)
 
     ret = self.CS.update(self.cp, self.cp_cam, self.cp_acc, self.CP.transmissionType)
-    ret.canValid = True # self.cp.can_valid  # FIXME: Restore cp_cam valid check after proper LKAS camera detect
+    ret.canValid = self.cp.can_valid  # FIXME: Restore cp_cam valid check after proper LKAS camera detect
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # TODO: add a field for this to carState, car interface code shouldn't write params
@@ -158,7 +188,7 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.parkBrake)
     if self.CS.steeringFault:
       events.add(EventName.steerTempUnavailable)
-    
+
     #PQTIMEBOMB STUFF START
     #Warning alert for the 6min timebomb found on PQ's
     ret.stopSteering = False
@@ -186,6 +216,12 @@ class CarInterface(CarInterfaceBase):
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
     #PQTIMEBOMB STUFF END
+
+    if self.CS.gsaIntvActive:
+      events.add(EventName.pqShiftUP)
+
+#    if self.CS.espIntervention:
+#      events.add(EventName.espInterventionDisengage)
 
     ret.events = events.to_msg()
     ret.buttonEvents = buttonEvents

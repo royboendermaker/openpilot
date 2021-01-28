@@ -116,6 +116,10 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     pqTimebombBypassed @97;
     pqTimebombTERMINAL @98;
 
+    pqShiftUP @99;                    # carlos-ddd PQ specific
+    pqShiftDOWN @100;
+    espInterventionDisengage @101;
+
     invalidGiraffeToyotaDEPRECATED @60;
     internetConnectivityNeededDEPRECATED @61;
     whitePandaUnsupportedDEPRECATED @81;
@@ -162,8 +166,8 @@ struct CarState {
   stockAeb @30 :Bool;
   stockFcw @31 :Bool;
   espDisabled @32 :Bool;
-  
-  stopSteering @37 :Bool; #Boolian for stopSteering
+
+  stopSteering @37 :Bool; 	   # PQ Timebomb
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -191,6 +195,10 @@ struct CarState {
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
+
+  graActive @38 :Bool;
+  espIntervention @39 :Bool;
+  engineRPMlimited @40 :Bool;
 
   struct WheelSpeeds {
     # optional wheel speeds

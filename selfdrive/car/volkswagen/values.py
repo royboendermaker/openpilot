@@ -7,6 +7,7 @@ class CarControllerParams:
   PQ_LDW_STEP = 5                # LDW message frequency 20Hz on PQ35/PQ46/NMS
   GRA_ACC_STEP = 3               # GRA_ACC_01 message frequency 33Hz
   MOB_STEP = 2                   # PQ_MOB message frequency 50Hz
+  GAS_STEP = 2                   # GAS_COMMAND message frequency 50Hz
   AWV_STEP = 2                   # ACC LED Control
 
   GRA_VBP_STEP = 100             # Send ACC virtual button presses once a second
@@ -18,12 +19,13 @@ class CarControllerParams:
   STEER_MAX = 300                # Max heading control assist torque 3.00 Nm
   STEER_DELTA_UP = 10            # Max HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
   STEER_DELTA_DOWN = 10          # Min HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
-  STEER_DRIVER_ALLOWANCE = 80
+  STEER_DRIVER_ALLOWANCE = 60
   STEER_DRIVER_MULTIPLIER = 3    # weight driver torque heavily
   STEER_DRIVER_FACTOR = 1        # from dbc
 
 class CANBUS:
   pt = 0
+  br = 1
   cam = 2
 
 NWL = car.CarParams.NetworkLocation
@@ -36,7 +38,9 @@ BUTTON_STATES = {
   "cancel": False,
   "setCruise": False,
   "resumeCruise": False,
-  "gapAdjustCruise": False
+  "gapAdjustCruise": False,
+  "longUp" : False,
+  "longDown" : False
 }
 
 MQB_LDW_MESSAGES = {
@@ -49,6 +53,21 @@ MQB_LDW_MESSAGES = {
   "laneAssistTakeOverSilent": 8,        # "Lane Assist: Please Take Over Steering" silent
   "emergencyAssistChangingLanes": 9,    # "Emergency Assist: Changing lanes..." with urgent beep
   "laneAssistDeactivated": 10,          # "Lane Assist deactivated." silent with persistent icon afterward
+}
+
+PQ_LDW_MESSAGES = {
+  "none": 0,                            # Nothing to display
+  "laneAssistUnavail": 1,               # "Lane Assist currently not available."
+  "laneAssistUnavailSysError": 2,       # "Lane Assist system error"
+  "laneAssistUnavailNoSensorView": 3,   # "Lane Assist not available. No sensor view."
+  "laneAssistTakeOver": 4,              # "Lane Assist: Please Take Over Steering"
+  "laneAssistDeactivTrailer": 5,        # "Lane Assist: no function with trailer"
+}
+
+PQ_LDW_SOUND = {
+  "none": 0,                            # silent
+  "info_chime": 1,                      
+  "warn_chime": 2,                     
 }
 
 class CAR:
@@ -86,6 +105,11 @@ FINGERPRINTS = {
      1334: 8, 1335: 8, 1336: 8, 1337: 8, 1338: 8, 1339: 8, 1340: 8, 1341: 8, 1342: 8, 1343: 8, 1344: 8, 1345: 8,
      1346: 8, 1392: 5, 1394: 1, 1408: 8, 1420: 8, 1440: 8, 1463: 8, 1470: 5, 1488: 8, 1490: 8, 1500: 8, 1523: 3,
      1550: 2, 1585: 8, 1626: 8, 1651: 8, 1654: 3, 1658: 2, 1691: 4, 1736: 2, 1792: 8, 1824: 7, 1977: 8, 2000: 8},
+    # carlos_ddd
+    {80: 4, 194: 8, 208: 6, 210: 5, 416: 8, 427: 8, 428: 8, 513: 6, 640: 8, 648: 8, 800: 8,
+     878: 8, 896: 8, 906: 4, 912: 8, 914: 8, 928: 8, 978: 7, 1056: 8, 1152: 8, 1164: 8, 1175: 8,
+     1184: 8, 1192: 8, 1312: 8, 1392: 5, 1394: 1, 1408: 8, 1420: 8, 1440: 8, 1463: 8, 1470: 5, 1488: 8,
+     1490: 8, 1500: 8, 1550: 2, 1626: 8, 1651: 4, 1654: 2, 1658: 2, 1736: 2, 1824: 7, 2000: 8},
     # cd (powertrain CAN direct)
     {16: 7, 17: 7, 80: 4, 174: 8, 194: 8, 208: 6, 416: 8, 428: 8, 640: 8, 648: 8, 672: 8, 800: 8, 896: 8, 906: 4,
      912: 8, 914: 8, 915: 8, 919: 8, 928: 8, 946: 8, 976: 6, 978: 7, 1056: 8, 1152: 8, 1160: 8, 1162: 8, 1164: 8,

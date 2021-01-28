@@ -1,6 +1,7 @@
 from cereal import log
 from common.numpy_fast import clip, interp
 from selfdrive.controls.lib.pid import PIController
+from common.op_params import opParams
 
 LongCtrlState = log.ControlsState.LongControlState
 
@@ -52,19 +53,65 @@ def long_control_state_trans(active, long_control_state, v_ego, v_target, v_pid,
 
 class LongControl():
   def __init__(self, CP, compute_gb):
+    self.op_params = opParams()     # for live parameter tuning of longitudinal (carlos-ddd)
     self.long_control_state = LongCtrlState.off  # initialized to off
     self.pid = PIController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
                             (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
                             rate=RATE,
                             sat_limit=0.8,
                             convert=compute_gb)
+    self.update_liveParams(CP)    # overwrite those of the line above (carlos-ddd)
     self.v_pid = 0.0
     self.last_output_gb = 0.0
+
+    self.prntCount = 0
+    self.prntLoop = 0
+    self.prntTotal = 0
+    self.prntGas = []
+    self.prntBrake = []
+    self.prntVist = []
+    self.prntVsoll = []
+    self.prntGB = []
+    self.prntAtarget = []
+    self.prntSta = []
 
   def reset(self, v_pid):
     """Reset PID controller and change setpoint"""
     self.pid.reset()
     self.v_pid = v_pid
+
+  def update_liveParams(self, CP):  # carlos-ddd
+  
+    if self.op_params.get('long_tune_single_params') == True:  # spot tuning
+      self.pid._k_p = ([self.op_params.get('kpBP')], [self.op_params.get('kpV')])
+      self.pid._k_i = ([self.op_params.get('kiBP')], [self.op_params.get('kiV')])
+      
+      # FOLLOWING values have no breakpoints yet!
+      CP.gasMaxBP = [0., self.op_params.get('gasMaxBP')]
+      CP.gasMaxV = [.3, self.op_params.get('gasMaxV')]  # limit maximum gas in standstill (safety)
+      
+      CP.brakeMaxBP = [self.op_params.get('brakeMaxBP')]
+      CP.brakeMaxV = [self.op_params.get('brakeMaxV')]
+      
+      CP.longitudinalTuning.deadzoneBP = [self.op_params.get('deadzoneBP')]
+      CP.longitudinalTuning.deadzoneV = [self.op_params.get('deadzoneV')]
+      
+    else:  # use interpolated (final list)
+      #       kph:      10   30   50    80    120
+      self.pid._k_p = ([2.8, 8.3, 13.8, 22.2, 33.3], [self.op_params.get('kpV_10'), self.op_params.get('kpV_30'), self.op_params.get('kpV_50'), self.op_params.get('kpV_80'), self.op_params.get('kpV_120')])
+      self.pid._k_i = ([2.8, 8.3, 13.8, 22.2, 33.3], [self.op_params.get('kiV_10'), self.op_params.get('kiV_30'), self.op_params.get('kiV_50'), self.op_params.get('kiV_80'), self.op_params.get('kiV_120')])
+      # self.pid.reset() is done within the call of LongControl.update()->"LongCtrlState.off or CS.gasPressed" call-path
+    
+      # FOLLOWING values have no breakpoints yet!
+      CP.gasMaxBP = [0., 2.8, 8.3, 13.8, 22.2, 33.3]
+      CP.gasMaxV = [.3, self.op_params.get('gasMax_10'), self.op_params.get('gasMax_30'), self.op_params.get('gasMax_50'), self.op_params.get('gasMax_80'), self.op_params.get('gasMax_120')]  # limit maximum gas in standstill (safety)
+      
+      CP.brakeMaxBP = [self.op_params.get('brakeMaxBP')]
+      CP.brakeMaxV = [self.op_params.get('brakeMaxV')]
+      
+      CP.longitudinalTuning.deadzoneBP = [2.8, 8.3, 13.8, 22.2, 33.3]
+      CP.longitudinalTuning.deadzoneV = [self.op_params.get('deadZone_10'), self.op_params.get('deadZone_30'), self.op_params.get('deadZone_50'), self.op_params.get('deadZone_80'), self.op_params.get('deadZone_120')]
+    
 
   def update(self, active, CS, v_target, v_target_future, a_target, CP):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
@@ -79,10 +126,15 @@ class LongControl():
                                                        CS.brakePressed, CS.cruiseState.standstill, CP.minSpeedCan)
 
     v_ego_pid = max(CS.vEgo, CP.minSpeedCan)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
+    # carlos-ddd plotting helpers
+    output_gb_save = 0.
+    prntStai = 0
 
     if self.long_control_state == LongCtrlState.off or CS.gasPressed:
+      self.update_liveParams(CP)    # carlos-ddd
       self.reset(v_ego_pid)
       output_gb = 0.
+      prntStai += 1
 
     # tracking objects and driving
     elif self.long_control_state == LongCtrlState.pid:
@@ -95,10 +147,13 @@ class LongControl():
       prevent_overshoot = not CP.stoppingControl and CS.vEgo < 1.5 and v_target_future < 0.7
       deadzone = interp(v_ego_pid, CP.longitudinalTuning.deadzoneBP, CP.longitudinalTuning.deadzoneV)
 
-      output_gb = self.pid.update(self.v_pid, v_ego_pid, speed=v_ego_pid, deadzone=deadzone, feedforward=a_target, freeze_integrator=prevent_overshoot)
+      output_gb = self.pid.update(self.v_pid, v_ego_pid, speed=v_ego_pid, deadzone=deadzone, feedforward=a_target, freeze_integrator=(prevent_overshoot or CS.clutchPressed))
+      output_gb_save = output_gb # carlos-ddd save for later plotting before clipping, limiting, etc to evaluate pid-performance
+      prntStai += 2
 
       if prevent_overshoot:
         output_gb = min(output_gb, 0.0)
+        prntStai += 3
 
     # Intention is to stop, switch to a different brake control until we stop
     elif self.long_control_state == LongCtrlState.stopping:
@@ -109,14 +164,75 @@ class LongControl():
 
       self.reset(CS.vEgo)
 
+      prntStai += 4
+
     # Intention is to move again, release brake fast before handing control to PID
     elif self.long_control_state == LongCtrlState.starting:
+      prntStai += 5
       if output_gb < -0.2:
         output_gb += CP.startingBrakeRate / RATE
+        prntStai += 6
       self.reset(CS.vEgo)
 
     self.last_output_gb = output_gb
     final_gas = clip(output_gb, 0., gas_max)
     final_brake = -clip(output_gb, -brake_max, 0.)
+   
+
+    # carlos-ddd plotting efforts
+    self.prntLoop += 1
+    if self.prntLoop >= 20: # record every 20th value => 5 values per second (100Hz calls here)
+      self.prntLoop = 0
+      self.prntGas.append(final_gas)
+      self.prntBrake.append(final_brake)
+      self.prntVist.append(v_ego_pid)
+      self.prntVsoll.append(self.v_pid)
+      self.prntGB.append(output_gb_save)
+      self.prntAtarget.append(a_target)
+      self.prntSta.append(prntStai)
+      self.prntCount += 1
+      if self.prntCount >= 10: # print them every 2 seconds (10 values at once)
+        self.prntCount = 0
+        print("k2-plot:%i:"%(self.prntTotal), end='')
+        
+        for itm in self.prntGas:
+          print("%.5f,"%(itm), end='')
+        print(":", end='')
+        
+        for itm in self.prntBrake:
+          print("%.5f,"%(itm), end='')
+        print(":", end='')
+        
+        for itm in self.prntVist:
+          print("%.2f,"%(itm), end='')
+        print(":", end='')
+        
+        for itm in self.prntVsoll:
+          print("%.1f,"%(itm), end='')
+        print(":", end='')
+        
+#        for itm in self.prntGB:
+#          print("%.5f,"%(itm), end='')
+#        print(":", end='')
+        
+        for itm in self.prntAtarget:
+          print("%.5f,"%(itm), end='')
+        print(":", end='')
+
+        for itm in self.prntSta:
+          print("%i,"%(itm), end='')
+        print(":", end='')
+        
+        print(";")
+        
+        self.prntGas.clear()
+        self.prntBrake.clear()
+        self.prntVist.clear()
+        self.prntVsoll.clear()
+        self.prntGB.clear()
+        self.prntAtarget.clear()
+        self.prntSta.clear()
+        
+        self.prntTotal += 1
 
     return final_gas, final_brake
