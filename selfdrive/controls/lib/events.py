@@ -509,6 +509,30 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       Priority.HIGH, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, .1, .1),
   },
 
+  EventName.pqShiftUP: {
+    ET.WARNING: Alert(
+      "Shift up",
+      "Consider ECO advice",
+      AlertStatus.normal, AlertSize.mid,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, 1., 2., 1.),
+  },
+  
+  EventName.pqShiftDOWN: {
+    ET.WARNING: Alert(
+      "Shift down",
+      "Consider ECO advice",
+      AlertStatus.normal, AlertSize.mid,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, 1., 2., 1.),
+  },
+
+  EventName.espInterventionDisengage: {
+    ET.WARNING: Alert(
+      "Automatic disengage",
+      "due to ESP intervention",
+      AlertStatus.normal, AlertSize.mid,
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimePrompt, 1., 2., 5.),
+  },
+
   EventName.fanMalfunction: {
     ET.PERMANENT: NormalPermanentAlert("Fan Malfunction", "Contact Support"),
   },

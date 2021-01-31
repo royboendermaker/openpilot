@@ -19,15 +19,25 @@ LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distracted
 
 # lookup tables VS speed to determine min and max accels in cruise
+
+# --------------------
+# MINIMUM acceleration (= deceleration)
+# --------------------
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MIN_V = [-1.0, -.8, -.67, -.5, -.30]
-_A_CRUISE_MIN_BP = [  0.,  5.,  10., 20.,  40.]
+#_A_CRUISE_MIN_V = [-1.0, -.8, -.67, -.5, -.30] # m/s^2
+_A_CRUISE_MIN_V = [-1.0, -.8, -.67, -.67, -.5] # m/s^2 carlos-ddd
+_A_CRUISE_MIN_BP = [ 0., 5.,  10., 20.,  40.]
+#                      0 , 18,  36 , 72,   144 km/h
 
 # need fast accel at very low speed for stop and go
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MAX_V = [1.2, 1.2, 0.65, .4]
-_A_CRUISE_MAX_V_FOLLOWING = [1.6, 1.6, 0.65, .4]
+# --------------------
+# MAXIMUM acceleration (= acceleration)
+# --------------------
+_A_CRUISE_MAX_V = [1.2, 1.2, 0.65, .4] # m/s^2
+_A_CRUISE_MAX_V_FOLLOWING = [1.6, 1.6, 0.65, .4] # m/s^2
 _A_CRUISE_MAX_BP = [0.,  6.4, 22.5, 40.]
+#                   0 ,  23 , 81  , 144 km/h
 
 # Lookup table for turns
 _A_TOTAL_MAX_V = [1.7, 3.2]
@@ -121,6 +131,11 @@ class Planner():
 
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
     following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
+    # status "following" is ACTIVE when:
+    # - there is a lead
+    # - distance is <45m
+    # - lead drives faster than me
+    # - lead acceleration is positive (no braking of lead)
 
     # Calculate speed for normal cruise control
     if enabled and not self.first_loop and not sm['carState'].gasPressed:
