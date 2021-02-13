@@ -1,5 +1,5 @@
 // Include Tesla radar safety code
-#include "safety_teslaradar.h"
+//#include "safety_teslaradar.h"
 
 // Safety-relevant steering constants for Volkswagen
 const int VOLKSWAGEN_MAX_STEER = 300;               // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
