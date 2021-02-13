@@ -214,13 +214,13 @@ class CarController():
     #                                                                         #
     # --------------------------------------------------------------------------
     # if using radar, we need to send the VIN
-    if CS.useTeslaRadar and (frame % 100 == 0):
-      can_sends.append(
-        volkswagencan.create_radar_VIN_msg(self.radarVin_idx, CS.radarVIN, 2, 0x4A0, CS.useTeslaRadar,
-                                            CS.radarPosition,
-                                            CS.radarEpasType))
-      self.radarVin_idx += 1
-      self.radarVin_idx = self.radarVin_idx % 3
+    #if CS.useTeslaRadar and (frame % 100 == 0):
+    #  can_sends.append(
+    #    volkswagencan.create_radar_VIN_msg(self.radarVin_idx, CS.radarVIN, 2, 0x4A0, CS.useTeslaRadar,
+    #                                        CS.radarPosition,
+    #                                        CS.radarEpasType))
+    #  self.radarVin_idx += 1
+    #  self.radarVin_idx = self.radarVin_idx % 3
 
     #--------------------------------------------------------------------------
     #                                                                         #
