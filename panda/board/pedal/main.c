@@ -110,8 +110,8 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 // ***************************** can port *****************************
 
 // addresses to be used on CAN
-#define CAN_GAS_INPUT  0x210
-#define CAN_GAS_OUTPUT 0x211U
+#define CAN_GAS_INPUT  0x200
+#define CAN_GAS_OUTPUT 0x201U
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
