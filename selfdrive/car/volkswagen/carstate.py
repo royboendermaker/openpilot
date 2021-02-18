@@ -10,14 +10,13 @@ class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
     can_define = CANDefine(DBC[CP.carFingerprint]['pt'])
-    
 
     ### START OF MAIN CONFIG OPTIONS ###
     ### Do NOT modify here, modify in /data/bb_openpilot.cfg and reboot
     self.useTeslaRadar = CP.enableGasInterceptor
-    self.radarVIN = "5YJSB7E17HF207544" # carlos_ddd
+    self.radarVIN = "5YJXCCE40HF060571"
     self.radarOffset = 0.
-    self.radarPosition = 1
+    self.radarPosition = 2
     self.radarEpasType = 3
     ### END OF MAIN CONFIG OPTIONS ###
 
@@ -26,9 +25,6 @@ class CarState(CarStateBase):
       self.get_can_parser = self.get_pq_can_parser
       self.get_cam_can_parser = self.get_pq_cam_can_parser
       self.update = self.update_pq
-      self.gsaHystActive = False   # gearshift assistant hysteris
-      self.gsaIntvActive = False
-      self.gsaSpeedFreeze = 0.0
       if CP.transmissionType == TRANS.automatic:
         self.shifter_values = can_define.dv["Getriebe_1"]['Waehlhebelposition__Getriebe_1_']
       if CP.enableGasInterceptor:
@@ -214,8 +210,6 @@ class CarState(CarStateBase):
     # Additional safety checks performed in CarInterface.
     self.parkingBrakeSet = bool(pt_cp.vl["Kombi_1"]['Bremsinfo'])  # FIXME: need to include an EPB check as well
     ret.espDisabled = bool(pt_cp.vl["Bremse_1"]['ESP_Passiv_getastet'])
-    ret.espIntervention = bool(pt_cp.vl["Bremse_1"]['ESP_Eingriff']) or bool(pt_cp.vl["Bremse_1"]['ASR_Anforderung'])
-
 
     # Update gear and/or clutch position data.
     if trans_type == TRANS.automatic:
@@ -227,9 +221,6 @@ class CarState(CarStateBase):
         ret.gearShifter = GEAR.reverse
       else:
         ret.gearShifter = GEAR.drive
-      self.engineRPM = pt_cp.vl["Motor_1"]['Motordrehzahl']  # engine RPM for gear shift assist
-#      self.gearDesired = pt_cp.vl["Getriebe_2"]['eingelegte_Fahrstufe']                 # gear ECU wants                  # 2do: needs to be added to signals / checks
-#      self.gearCurrent = pt_cp.vl["Getriebe_2"]['Ganganzeige_Kombi___Getriebe_Va']      # gear ECU detected
 
     # Update door and trunk/hatch lid open status.
     # TODO: need to locate signals for other three doors if possible
@@ -248,68 +239,37 @@ class CarState(CarStateBase):
     self.ldw_side_dlc_tlc = False
     self.ldw_dlc = False
     self.ldw_tlc = False
-    
-    # Update control button states for turn signals and ACC controls.
-    self.buttonStates["accelCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Up_kurz'])
-    self.buttonStates["decelCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Down_kurz'])
-    self.buttonStates["cancel"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Abbrechen'])
-    self.buttonStates["setCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Neu_Setzen'])
-    self.buttonStates["resumeCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Recall'])
-    self.buttonStates["gapAdjustCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Zeitluecke'])
-    self.buttonStates["longUp"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Up_lang'])
-    self.buttonStates["longDown"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Down_lang'])
 
     # Update ACC radar status.
+    # FIXME: This is unfinished and not fully correct, need to improve further
     ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
-    ret.graActive = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
-    
+    ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
+
+    # Set override flag for openpilot enabled state.
+    if self.CP.enableGasInterceptor and pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
+      self.openpilot_enabled = True
+
+    # Check if Gas or Brake pressed and cancel override
+    if self.CP.enableGasInterceptor and (ret.gasPressed or ret.brakePressed):
+      self.openpilot_enabled = False
 
     # Override openpilot enabled if gas interceptor installed
     if self.CP.enableGasInterceptor and self.openpilot_enabled:
       ret.cruiseState.enabled = True
-    else:
-      ret.cruiseState.enabled = False
 
-    ret.cruiseState.speed = self.v_ACC * CV.KPH_TO_MS
-
-    # for manual cars only (gearshift assistant)
-    if trans_type == TRANS.manual:
-      # get car's gearshift advice
-#      if (0 < self.gearDesired < 7) and (0 < self.gearCurrent < 7):                     # 0 = gear not detected
-#        self.gearAdvice = self.gearDesired - self.gearCurrent
-#        self.gearAdviceValid = True
-#      else:
-#        self.gearAdvice = 0
-#        self.gearAdviceValid = False
-
-      # test RPM limit and prevent change as long as in hysteresis
-      if self.engineRPM > 2500.0 and not self.gsaHystActive and ret.vEgo<120.*CV.KPH_TO_MS:
-        self.gsaSpeedFreeze = ret.vEgo
-        self.gsaHystActive = True
-      # within hysteresis band -> set RPM intervention active
-      if self.gsaHystActive:
-        self.gsaIntvActive = True
-      else:
-        self.gsaIntvActive = False
-      # handle hysteresis flag
-      if self.engineRPM < 2200.0:   # or self.gearAdvice < 0
-        self.gsaHystActive = False
-
-      # assign desired values to generate desired set-speed (depending on driving situation)
-      if ret.clutchPressed:                                           # during clutch open do not try to accelerate
-        ret.cruiseState.speed = min(ret.vEgo, ret.cruiseState.speed)  # -> neutral speed setpoint but do not increase
-                                                                      #    (to not prevent braking with clutch open)
-      # apply limit when >RPM limit # + car advises to shift up
-      # in last gear, no shift up advice is sent by ECU -> do not limit
-      elif self.gsaIntvActive:      # and self.gearAdvice > 0  and self.gearAdviceValid     # >RPM limit + no shift up advice -> last gear
-        ret.cruiseState.speed = self.gsaSpeedFreeze                   # limit RPM by using frozen speed
-
-      ret.engineRPMlimited = self.gsaIntvActive
-
+    # Update ACC setpoint. When the setpoint reads as 255, the driver has not
+    # yet established an ACC setpoint, so treat it as zero.
+    ret.cruiseState.speed = pt_cp.vl["Motor_2"]['Soll_Geschwindigkeit_bei_GRA_Be'] * CV.KPH_TO_MS
     if ret.cruiseState.speed > 70:  # 255 kph in m/s == no current setpoint
       ret.cruiseState.speed = 0
 
-
+    # Update control button states for turn signals and ACC controls.
+    self.buttonStates["accelCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Up_kurz']) or bool(pt_cp.vl["GRA_Neu"]['GRA_Up_lang'])
+    self.buttonStates["decelCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Down_kurz']) or bool(pt_cp.vl["GRA_Neu"]['GRA_Down_lang'])
+    self.buttonStates["cancel"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Abbrechen'])
+    self.buttonStates["setCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Neu_Setzen'])
+    self.buttonStates["resumeCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Recall'])
+    self.buttonStates["gapAdjustCruise"] = bool(pt_cp.vl["GRA_Neu"]['GRA_Zeitluecke'])
     ret.leftBlinker = bool(pt_cp.vl["Gate_Komf_1"]['GK1_Blinker_li'])
     ret.rightBlinker = bool(pt_cp.vl["Gate_Komf_1"]['GK1_Blinker_re'])
 
@@ -335,7 +295,7 @@ class CarState(CarStateBase):
     if self.CP.enableGasInterceptor:
       self.ABSWorking = pt_cp.vl["Bremse_8"]["BR8_Sta_ADR_BR"]
       self.currentSpeed = ret.vEgo
-    
+
     return ret
 
   @staticmethod
@@ -477,9 +437,7 @@ class CarState(CarStateBase):
       ("GRA_Zeitluecke", "GRA_Neu", 0),             # ACC button, time gap adj
       ("GRA_Neu_Zaehler", "GRA_Neu", 0),            # ACC button, time gap adj
       ("GRA_Sender", "GRA_Neu", 0),                 # GRA Sender Coding
-      ("BR8_Sta_ADR_BR", "Bremse_8", 0),            # ABS Pump actively braking for ACC
-      ("ESP_Eingriff", "Bremse_1", 0),              # ABS stability intervention
-      ("ASR_Anforderung", "Bremse_1", 0),           # ABS slip detected      
+      ("BR8_Sta_ADR_BR", "Bremse_8", 0),           # ABS Pump actively braking for ACC
     ]
 
     checks = [
@@ -495,7 +453,7 @@ class CarState(CarStateBase):
       ("Kombi_1", 50),            # From J285 Instrument cluster
       ("Motor_2", 50),            # From J623 Engine control module
       ("Lenkhilfe_2", 20),        # From J500 Steering Assist with integrated sensors
-      ("Gate_Komf_1", 10),        # From J533 CAN gateway
+      ("Gate_Komf_1", 10),     # From J533 CAN gateway
       ("Einheiten_1", 1),         # From J??? cluster or gateway
     ]
 
@@ -504,9 +462,7 @@ class CarState(CarStateBase):
       checks += [("Getriebe_1", 100)]  # From J743 Auto transmission control module
     elif CP.transmissionType == TRANS.manual:
       signals += [("Kupplungsschalter", "Motor_1", 0),  # Clutch switch
-                  ("GK1_Rueckfahr", "Gate_Komf_1", 0),  # Reverse light from BCM
-                  ("Motordrehzahl", "Motor_1", 0),      # engine RPM
-                  ]
+                  ("GK1_Rueckfahr", "Gate_Komf_1", 0)]  # Reverse light from BCM
       checks += [("Motor_1", 100)]  # From J623 Engine control module
 
     if CP.networkLocation == NWL.fwdCamera:
