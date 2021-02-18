@@ -2,10 +2,8 @@ from cereal import car
 from common.numpy_fast import clip
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.volkswagen import volkswagencan
-from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, MQB_LDW_MESSAGES, BUTTON_STATES, CarControllerParams, PQ_LDW_MESSAGES
+from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, MQB_LDW_MESSAGES, BUTTON_STATES, CarControllerParams
 from opendbc.can.packer import CANPacker
-from common.op_params import opParams
-
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
@@ -13,8 +11,6 @@ class CarController():
     self.mobPreEnable = False
     self.mobEnabled = False
     self.radarVin_idx = 0
-
-    self.graCancleCnt = 0
 
     self.packer_pt = CANPacker(DBC[CP.carFingerprint]['pt'])
     self.acc_bus = CANBUS.pt if CP.networkLocation == NWL.fwdCamera else CANBUS.cam
@@ -40,12 +36,7 @@ class CarController():
     self.graMsgStartFramePrev = 0
     self.graMsgBusCounterPrev = 0
 
-    self.ACCSlowDown = False
-    self.ACCSpeedUp = False
-
     self.steer_rate_limited = False
-    
-    self.op_params = opParams()     # for live parameter tuning of longitudinal (carlos-ddd)
 
   def update(self, enabled, CS, frame, actuators, visual_alert, audible_alert, leftLaneVisible, rightLaneVisible):
     """ Controls thread """
@@ -139,14 +130,12 @@ class CarController():
     if (frame % P.MOB_STEP == 0) and CS.CP.enableGasInterceptor:
       mobEnabled = self.mobEnabled
       mobPreEnable = self.mobPreEnable
-      mobBrakeScaling = self.op_params.get('PQbrakeScaling')
-      mobBrakeMax = int(self.op_params.get('PQbrakeMax'))
       # TODO make sure we use the full 8190 when calculating braking.
-      apply_brake = actuators.brake * mobBrakeScaling
+      apply_brake = actuators.brake * 1200
       stopping_wish = False
 
       if enabled:
-        if (apply_brake < 0):
+        if (apply_brake < 40):
           apply_brake = 0
         if apply_brake > 0:
           if not mobEnabled:
@@ -155,10 +144,10 @@ class CarController():
           elif not mobPreEnable:
             mobPreEnable = True
             apply_brake = 0
-          elif apply_brake > mobBrakeMax:
-            apply_brake = mobBrakeMax
+          elif apply_brake > 1199:
+            apply_brake = 1200
             CS.brake_warning = True
-          if CS.currentSpeed < 1.94: #7kph
+          if CS.currentSpeed < 5.6:
             stopping_wish = True
         else:
           mobPreEnable = False
@@ -167,8 +156,6 @@ class CarController():
         apply_brake = 0
         mobPreEnable = False
         mobEnabled = False
-      
-      apply_brake = int(apply_brake)
 
       idx = (frame / P.MOB_STEP) % 16
       self.mobPreEnable = mobPreEnable
@@ -182,7 +169,7 @@ class CarController():
       #                                                                         #
       # --------------------------------------------------------------------------
       if (frame % P.AWV_STEP == 0) and CS.CP.enableGasInterceptor:
-        green_led = 1 if enabled and (CS.ABSWorking == 0) else 0
+        green_led = 1 if enabled else 0
         orange_led = 1 if self.mobPreEnable and self.mobEnabled else 0
         if enabled:
           braking_working = 0 if (CS.ABSWorking == 0) else 5
@@ -202,7 +189,7 @@ class CarController():
     # --------------------------------------------------------------------------
     if (frame % P.GAS_STEP == 0) and CS.CP.enableGasInterceptor:
       apply_gas = 0
-      if enabled and not CS.out.clutchPressed:
+      if enabled:
         apply_gas = clip(actuators.gas, 0., 1.)
 
       can_sends.append(self.create_gas_control(self.packer_pt, CANBUS.pt, apply_gas, frame // 2))
@@ -236,9 +223,9 @@ class CarController():
       hcaEnabled = True if enabled and not CS.out.standstill else False
 
       if visual_alert == car.CarControl.HUDControl.VisualAlert.steerRequired:
-        hud_alert = PQ_LDW_MESSAGES["laneAssistTakeOver"]
+        hud_alert = MQB_LDW_MESSAGES["laneAssistTakeOverSilent"]
       else:
-        hud_alert = PQ_LDW_MESSAGES["none"]
+        hud_alert = MQB_LDW_MESSAGES["none"]
 
       can_sends.append(self.create_hud_control(self.packer_pt, CANBUS.pt, hcaEnabled,
                                                             CS.out.steeringPressed, hud_alert, leftLaneVisible,
@@ -269,16 +256,9 @@ class CarController():
         # A subset of MQBs like to "creep" too aggressively with this implementation.
         self.graButtonStatesToSend = BUTTON_STATES.copy()
         self.graButtonStatesToSend["resumeCruise"] = True
-      # car's stock cruise control needs to be cancelled if it is active
-      elif enabled and CS.out.graActive and self.graCancleCnt<=4 and CS.CP.enableGasInterceptor:
+      elif enabled and CS.out.cruiseState.enabled and CS.CP.enableGasInterceptor:
         self.graButtonStatesToSend = BUTTON_STATES.copy()
         self.graButtonStatesToSend["cancel"] = True
-
-
-      # GRA cancelling
-      self.graCancleCnt += 1
-      if self.graCancleCnt >= 15 or not CS.out.graActive:
-        self.graCancleCnt = 0
 
 
     # OP/Panda can see this message but can't filter it when integrated at the
