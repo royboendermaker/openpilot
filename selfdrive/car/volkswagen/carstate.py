@@ -263,21 +263,6 @@ class CarState(CarStateBase):
     ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
     ret.graActive = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
     
-    # ACC emulation
-    self.ACC_engaged, self.v_ACC = self.ACC.update_acc_iter_4CS(ret.vEgo*CV.MS_TO_KPH, self.buttonStates, ret.cruiseState.available, self.openpilot_enabled)
-
-    # Engage open pilot if ACC emulation says so
-    if self.CP.enableGasInterceptor and self.ACC_engaged:
-      self.openpilot_enabled = True
-    # if ACC emulation is not active we want OP still engaged but setspeed <= current speed
-    elif self.CP.enableGasInterceptor and not self.ACC_engaged:
-      self.v_ACC = (ret.vEgo - 1) * CV.MS_TO_KPH
-    else:
-      self.openpilot_enabled = False
-
-    # Check if Gas or Brake pressed and override ACC emulation
-    if self.CP.enableGasInterceptor and (ret.gasPressed or ret.brakePressed or ret.espIntervention):
-      self.openpilot_enabled = False
 
     # Override openpilot enabled if gas interceptor installed
     if self.CP.enableGasInterceptor and self.openpilot_enabled:
