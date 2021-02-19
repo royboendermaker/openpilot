@@ -90,6 +90,8 @@ class RadarD():
 
     self.tracks = defaultdict(dict)
     self.kalman_params = KalmanParams(radar_ts)
+    
+    self.active = 0
 
     # v_ego
     self.v_ego = 0.
@@ -101,6 +103,7 @@ class RadarD():
     self.current_time = 1e-9*max(sm.logMonoTime.values())
 
     if sm.updated['controlsState']:
+      self.active = sm['controlsState'].active
       self.v_ego = sm['controlsState'].vEgo
       self.v_ego_hist.append(self.v_ego)
     if sm.updated['modelV2']:
@@ -202,7 +205,7 @@ def radard_thread(sm=None, pm=None, can_sock=None):
 
   while 1:
     can_strings = messaging.drain_sock_raw(can_sock, wait_for_one=True)
-    rr = RI.update(can_strings, v_ego=0)
+    rr, rrext, ahbCarDetected = RI.update(can_strings, v_ego=0)
 
     if rr is None:
       continue
