@@ -71,7 +71,6 @@ class RadarInterface(RadarInterfaceBase):
     self.updated_messages = set()
 
   def update(self, can_strings):
-    # radard at 20Hz and return no points
     if self.radar_off_can:
       return super().update(None)
           
