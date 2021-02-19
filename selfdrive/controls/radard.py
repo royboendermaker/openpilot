@@ -90,8 +90,6 @@ class RadarD():
 
     self.tracks = defaultdict(dict)
     self.kalman_params = KalmanParams(radar_ts)
-    
-    self.active = 0
 
     # v_ego
     self.v_ego = 0.
@@ -99,11 +97,10 @@ class RadarD():
 
     self.ready = False
 
-  def update(self, frame, sm, rr, enable_lead):
+  def update(self, sm, rr, enable_lead):
     self.current_time = 1e-9*max(sm.logMonoTime.values())
 
     if sm.updated['controlsState']:
-      self.active = sm['controlsState'].active
       self.v_ego = sm['controlsState'].vEgo
       self.v_ego_hist.append(self.v_ego)
     if sm.updated['modelV2']:
@@ -160,7 +157,7 @@ class RadarD():
 
     # *** publish radarState ***
     dat = messaging.new_message('radarState')
-    dat.valid = sm.all_alive_and_valid(service_list=['controlsState', 'modelV2'])
+    dat.valid = sm.all_alive_and_valid()
     radarState = dat.radarState
     radarState.mdMonoTime = sm.logMonoTime['modelV2']
     radarState.canMonoTimes = list(rr.canMonoTimes)
@@ -191,33 +188,28 @@ def radard_thread(sm=None, pm=None, can_sock=None):
   if can_sock is None:
     can_sock = messaging.sub_sock('can')
   if sm is None:
-    sm = messaging.SubMaster(['modelV2', 'controlsState', 'liveParameters'])
+    sm = messaging.SubMaster(['modelV2', 'controlsState'])
   if pm is None:
     pm = messaging.PubMaster(['radarState', 'liveTracks'])
 
   RI = RadarInterface(CP)
 
-  rk = Ratekeeper(1.0 / 0.05, print_delay_threshold=None)
-  RD = RadarD(0.05, RI.delay)
+  rk = Ratekeeper(1.0 / CP.radarTimeStep, print_delay_threshold=None)
+  RD = RadarD(CP.radarTimeStep, RI.delay)
 
   # TODO: always log leads once we can hide them conditionally
   enable_lead = CP.openpilotLongitudinalControl or not CP.radarOffCan
 
   while 1:
     can_strings = messaging.drain_sock_raw(can_sock, wait_for_one=True)
-    # This looks like a useless tesla hack. See if it can be removed?
-    # carlos_ddd: no it can't -> discussed with @Edgy 28.01.2021
-    if CP.carName == "volkswagen":
-      rr, rrext, ahbCarDetected = RI.update(can_strings, v_ego=0)
-    else:
-      rr = RI.update(can_strings)
+    rr = RI.update(can_strings)
 
     if rr is None:
       continue
 
     sm.update(0)
 
-    dat = RD.update(rk.frame, sm, rr, enable_lead)
+    dat = RD.update(sm, rr, enable_lead)
     dat.radarState.cumLagMs = -rk.remaining*1000.
 
     pm.send('radarState', dat)
