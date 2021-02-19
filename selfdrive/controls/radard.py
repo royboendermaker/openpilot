@@ -100,8 +100,8 @@ class RadarD():
   def update(self, sm, rr, enable_lead):
     self.current_time = 1e-9*max(sm.logMonoTime.values())
 
-    if sm.updated['carState']:
-      self.v_ego = sm['carState'].vEgo
+    if sm.updated['controlsState']:
+      self.v_ego = sm['controlsState'].vEgo
       self.v_ego_hist.append(self.v_ego)
     if sm.updated['modelV2']:
       self.ready = True
@@ -157,12 +157,12 @@ class RadarD():
 
     # *** publish radarState ***
     dat = messaging.new_message('radarState')
-    dat.valid = sm.all_alive_and_valid() and len(rr.errors) == 0
+    dat.valid = sm.all_alive_and_valid()
     radarState = dat.radarState
     radarState.mdMonoTime = sm.logMonoTime['modelV2']
     radarState.canMonoTimes = list(rr.canMonoTimes)
     radarState.radarErrors = list(rr.errors)
-    radarState.carStateMonoTime = sm.logMonoTime['carState']
+    radarState.controlsStateMonoTime = sm.logMonoTime['controlsState']
 
     if enable_lead:
       if len(sm['modelV2'].leads) > 1:
@@ -188,7 +188,7 @@ def radard_thread(sm=None, pm=None, can_sock=None):
   if can_sock is None:
     can_sock = messaging.sub_sock('can')
   if sm is None:
-    sm = messaging.SubMaster(['modelV2', 'carState'])
+    sm = messaging.SubMaster(['modelV2', 'controlsState'])
   if pm is None:
     pm = messaging.PubMaster(['radarState', 'liveTracks'])
 
@@ -202,7 +202,12 @@ def radard_thread(sm=None, pm=None, can_sock=None):
 
   while 1:
     can_strings = messaging.drain_sock_raw(can_sock, wait_for_one=True)
-    rr = RI.update(can_strings)
+    # This looks like a useless tesla hack. See if it can be removed?
+    # carlos_ddd: no it can't -> discussed with @Edgy 28.01.2021
+    if CP.carName == "volkswagen":
+      rr, rrext, ahbCarDetected = RI.update(can_strings, v_ego=0)
+    else:
+      rr = RI.update(can_strings)
 
     if rr is None:
       continue
