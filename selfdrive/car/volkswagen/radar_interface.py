@@ -3,7 +3,7 @@ from opendbc.can.parser import CANParser
 from cereal import car
 from selfdrive.car.interfaces import RadarInterfaceBase
 
-def _create_radar_can_parser(car_fingerprint):
+def _create_radar_can_parser(CP):
   RADAR_A_MSGS = list(range(0x310, 0x36F))
   RADAR_B_MSGS = list(range(0x311, 0x36F))
 
@@ -52,7 +52,7 @@ def _create_radar_can_parser(car_fingerprint):
 
   checks = list(zip(RADAR_A_MSGS + RADAR_B_MSGS, [6] * (msg_a_n + msg_b_n)))
 
-  return CANParser(os.path.splitext(dbc_f)[0].encode("utf8"), signals, checks, 2)
+  return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
 
 class RadarInterface(RadarInterfaceBase):
   def __init__(self, CP):
@@ -69,9 +69,6 @@ class RadarInterface(RadarInterfaceBase):
     self.trigger_msg = self.RADAR_B_MSGS[-1]
     self.updated_messages = set()
 
-    # No radar dbc for cars without DSU which are not TSS 2.0
-    # TODO: make a adas dbc file for dsu-less models
-    self.no_radar = CP.carFingerprint in NO_DSU_CAR and CP.carFingerprint not in TSS2_CAR
 
   def update(self, can_strings):
     if self.radar_off_can:
