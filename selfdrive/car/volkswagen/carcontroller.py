@@ -157,7 +157,7 @@ class CarController():
       idx = (frame / P.MOB_STEP) % 16
       self.mobPreEnable = mobPreEnable
       self.mobEnabled = mobEnabled
-      can_sends.append(self.create_braking_control(self.packer_pt, CANBUS.br, apply_brake, idx, mobEnabled, mobPreEnable, stopping_wish))
+      can_sends.append(self.create_braking_control(self.packer_pt, CANBUS.pt, apply_brake, idx, mobEnabled, mobPreEnable, stopping_wish))
 
       # --------------------------------------------------------------------------
       #                                                                         #
@@ -189,7 +189,7 @@ class CarController():
       if enabled:
         apply_gas = clip(actuators.gas, 0., 1.)
 
-      can_sends.append(self.create_gas_control(self.packer_pt, CANBUS.cam, apply_gas, frame // 2))
+      can_sends.append(self.create_gas_control(self.packer_pt, CANBUS.pt, apply_gas, frame // 2))
 
     # --------------------------------------------------------------------------
     #                                                                         #
@@ -198,13 +198,13 @@ class CarController():
     #                                                                         #
     # --------------------------------------------------------------------------
     # if using radar, we need to send the VIN
-    if CS.useTeslaRadar and (frame % 100 == 0):
-      can_sends.append(
-        volkswagencan.create_radar_VIN_msg(self.radarVin_idx, CS.radarVIN, 2, 0x4A0, CS.useTeslaRadar,
-                                            CS.radarPosition,
-                                            CS.radarEpasType))
-      self.radarVin_idx += 1
-      self.radarVin_idx = self.radarVin_idx % 3
+    #if CS.useTeslaRadar and (frame % 100 == 0):
+    #  can_sends.append(
+    #    volkswagencan.create_radar_VIN_msg(self.radarVin_idx, CS.radarVIN, 2, 0x4A0, CS.useTeslaRadar,
+    #                                        CS.radarPosition,
+    #                                        CS.radarEpasType))
+    #  self.radarVin_idx += 1
+    #  self.radarVin_idx = self.radarVin_idx % 3
 
     #--------------------------------------------------------------------------
     #                                                                         #
@@ -288,7 +288,7 @@ class CarController():
         if self.graMsgSentCount == 0:
           self.graMsgStartFramePrev = frame
         idx = (CS.graMsgBusCounter + 1) % 16
-        can_sends.append(self.create_acc_buttons_control(self.packer_pt, CANBUS.br, self.graButtonStatesToSend, CS, idx))
+        can_sends.append(self.create_acc_buttons_control(self.packer_pt, CANBUS.pt, self.graButtonStatesToSend, CS, idx))
         self.graMsgSentCount += 1
         if self.graMsgSentCount >= P.GRA_VBP_COUNT:
           self.graButtonStatesToSend = None
