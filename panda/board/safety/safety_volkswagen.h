@@ -387,6 +387,15 @@ static int volkswagen_pq_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
   
+  // GAS PEDAL: safety check
+  if (addr == MSG_GAS_COMMAND) {
+    if (!controls_allowed) {
+      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
+        tx = 0;
+      }
+    }
+  }
+  
   // 1 allows the message through
   return tx;
 }
