@@ -222,9 +222,9 @@ def thermald_thread():
         startup_conditions["ignition"] = health.health.ignitionLine or health.health.ignitionCan
 
       # Setup fan handler on first connect to panda
-      if handle_fan is None and pandaState.pandaState.pandaType != log.PandaState.PandaType.unknown:
-        is_uno = pandaState.pandaState.pandaType == log.PandaState.PandaType.uno
-        has_relay = pandaState.pandaState.pandaType in [log.PandaState.PandaType.blackPanda, log.PandaState.PandaType.uno, log.PandaState.PandaType.dos]
+      if handle_fan is None and health.health.hwType != log.HealthData.HwType.unknown:
+        is_uno = health.health.hwType == log.HealthData.HwType.uno
+        has_relay = health.health.hwType in [log.health.hwType.blackPanda, log.health.hwType.uno, log.health.hwType.dos]
 
         if (not EON) or is_uno:
           cloudlog.info("Setting up UNO fan handler")
@@ -363,7 +363,7 @@ def thermald_thread():
     should_start = all(startup_conditions.values())
 
     startup_conditions["hardware_supported"] = health is not None
-    set_offroad_alert_if_changed("Offroad_HardwareUnsupported", pandaState is not None and not startup_conditions["hardware_supported"])
+    set_offroad_alert_if_changed("Offroad_HardwareUnsupported", health is not None and not startup_conditions["hardware_supported"])
 
     if should_start:
       if not should_start_prev:
