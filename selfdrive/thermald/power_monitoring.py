@@ -97,7 +97,7 @@ class PowerMonitoring:
           # If white/grey panda, use the integrated current measurements if the measurement is not 0
           # If the measurement is 0, the current is 400mA or greater, and out of the measurement range of the panda
           # This seems to be accurate to about 5%
-          current_power = (PANDA_OUTPUT_VOLTAGE * panda_current_to_actual_current(pandaState.pandaState.current))
+          current_power = (PANDA_OUTPUT_VOLTAGE * panda_current_to_actual_current(health.health.current))
         elif (self.next_pulsed_measurement_time is not None) and (self.next_pulsed_measurement_time <= now):
           # TODO: Figure out why this is off by a factor of 3/4???
           FUDGE_FACTOR = 1.33
