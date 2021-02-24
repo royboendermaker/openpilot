@@ -73,6 +73,8 @@ FINGERPRINTS = {
   ],
 }
 
+PQ_CARS = [CAR.GENERICPQ]
+
 DBC = {
   CAR.GENERICPQ: dbc_dict('vw_golf_mk4', None),
 }
