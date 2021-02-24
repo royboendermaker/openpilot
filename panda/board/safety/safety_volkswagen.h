@@ -388,67 +388,6 @@ static int volkswagen_pq_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
- // Tesla Radar TX hook
- //check if this is a teslaradar vin message
- //capture message for radarVIN and settings
- if (addr == MSG_TESLA_VIN) {
-   int id = (to_send->RDLR & 0xFF);
-   int radarVin_b1 = ((to_send->RDLR >> 8) & 0xFF);
-   int radarVin_b2 = ((to_send->RDLR >> 16) & 0xFF);
-   int radarVin_b3 = ((to_send->RDLR >> 24) & 0xFF);
-   int radarVin_b4 = (to_send->RDHR & 0xFF);
-   int radarVin_b5 = ((to_send->RDHR >> 8) & 0xFF);
-   int radarVin_b6 = ((to_send->RDHR >> 16) & 0xFF);
-   int radarVin_b7 = ((to_send->RDHR >> 24) & 0xFF);
-   if (id == 0) {
-     tesla_radar_should_send = (radarVin_b2 & 0x01);
-     radarPosition =  ((radarVin_b2 >> 1) & 0x03);
-     radarEpasType = ((radarVin_b2 >> 3) & 0x07);
-     tesla_radar_trigger_message_id = (radarVin_b3 << 8) + radarVin_b4;
-     tesla_radar_can = radarVin_b1;
-     radar_VIN[0] = radarVin_b5;
-     radar_VIN[1] = radarVin_b6;
-     radar_VIN[2] = radarVin_b7;
-     tesla_radar_vin_complete = tesla_radar_vin_complete | 1;
-   }
-   if (id == 1) {
-     radar_VIN[3] = radarVin_b1;
-     radar_VIN[4] = radarVin_b2;
-     radar_VIN[5] = radarVin_b3;
-     radar_VIN[6] = radarVin_b4;
-     radar_VIN[7] = radarVin_b5;
-     radar_VIN[8] = radarVin_b6;
-     radar_VIN[9] = radarVin_b7;
-     tesla_radar_vin_complete = tesla_radar_vin_complete | 2;
-   }
-   if (id == 2) {
-     radar_VIN[10] = radarVin_b1;
-     radar_VIN[11] = radarVin_b2;
-     radar_VIN[12] = radarVin_b3;
-     radar_VIN[13] = radarVin_b4;
-     radar_VIN[14] = radarVin_b5;
-     radar_VIN[15] = radarVin_b6;
-     radar_VIN[16] = radarVin_b7;
-     tesla_radar_vin_complete = tesla_radar_vin_complete | 4;
-    }
-    else {
-      return 0;
-    }
-  }
-
-  // GAS PEDAL: safety check
-  if (addr == MSG_GAS_COMMAND) {
-    if (!controls_allowed) {
-      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
-        tx = 0;
-      }
-    }
-  }
-
-  // 1 allows the message through
-  return tx;
-}
-
 static int volkswagen_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int addr = GET_ADDR(to_fwd);
   int bus_fwd = -1;
