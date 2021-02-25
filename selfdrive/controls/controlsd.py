@@ -43,7 +43,8 @@ EventName = car.CarEvent.EventName
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None):
     config_realtime_process(3, Priority.CTRL_HIGH)
-
+    print("init start")
+    
     # Setup sockets
     self.pm = pm
     if self.pm is None:
@@ -59,6 +60,8 @@ class Controls:
     if can_sock is None:
       can_timeout = None if os.environ.get('NO_CAN_TIMEOUT', False) else 100
       self.can_sock = messaging.sub_sock('can', timeout=can_timeout)
+    
+    print("finished setting up sockets")
 
     # wait for one pandaState and one CAN packet
     hw_type = messaging.recv_one(self.sm.sock['health']).health.hwType
@@ -77,9 +80,13 @@ class Controls:
     openpilot_enabled_toggle = params.get("OpenpilotEnabledToggle", encoding='utf8') == "1"
     passive = params.get("Passive", encoding='utf8') == "1" or \
               internet_needed or not openpilot_enabled_toggle
+    
+    print("finished reading params")
 
     # detect sound card presence and ensure successful init
     sounds_available = HARDWARE.get_sound_card_online()
+    
+    print("finished reading sound card presence")
 
     car_recognized = self.CP.carName != 'mock'
     # If stock camera is disconnected, we loaded car controls and it's not dashcam mode
@@ -89,6 +96,8 @@ class Controls:
                        self.CP.dashcamOnly or community_feature_disallowed
     if self.read_only:
       self.CP.safetyModel = car.CarParams.SafetyModel.noOutput
+      
+    print("some stuff for safety model and community features finished")
 
     # Write CarParams for radard and boardd safety mode
     cp_bytes = self.CP.to_bytes()
@@ -145,18 +154,23 @@ class Controls:
     # controlsd is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)
     self.prof = Profiler(False)  # off by default
+    
+    print("ending init")
 
   def update_events(self, CS):
     """Compute carEvents from carState"""
+    print("update events starts")
 
     self.events.clear()
     self.events.add_from_msg(CS.events)
     self.events.add_from_msg(self.sm['dMonitoringState'].events)
+    print("some event stuff like dmonitoringstate")
 
     # Handle startup event
     if self.startup_event is not None:
       self.events.add(self.startup_event)
       self.startup_event = None
+    print("start up event stuff")
 
     # Create events for battery, temperature, disk space, and memory
     if self.sm['thermal'].batteryPercent < 1 and self.sm['thermal'].chargingError:
@@ -169,6 +183,7 @@ class Controls:
       self.events.add(EventName.outOfSpace)
     if self.sm['thermal'].memUsedPercent > 90:
       self.events.add(EventName.lowMemory)
+    print("battery, space, and temp stuff")
 
     # Alert if fan isn't spinning for 5 seconds
     if self.sm['health'].hwType in [HwType.uno, HwType.dos]:
@@ -177,6 +192,7 @@ class Controls:
           self.events.add(EventName.fanMalfunction)
       else:
         self.last_functional_fan_frame = self.sm.frame
+    print("stuff for fan dead")
 
     # Handle calibration status
     cal_status = self.sm['liveCalibration'].calStatus
@@ -185,6 +201,7 @@ class Controls:
         self.events.add(EventName.calibrationIncomplete)
       else:
         self.events.add(EventName.calibrationInvalid)
+    print("calibration status shit")
 
     # Handle lane change
     if self.sm['pathPlan'].laneChangeState == LaneChangeState.preLaneChange:
@@ -200,6 +217,7 @@ class Controls:
     elif self.sm['pathPlan'].laneChangeState in [LaneChangeState.laneChangeStarting,
                                                  LaneChangeState.laneChangeFinishing]:
       self.events.add(EventName.laneChange)
+    print("lane path stuff")
 
     if self.can_rcv_error or (not CS.canValid and self.sm.frame > 5 / DT_CTRL):
       self.events.add(EventName.canError)
@@ -239,18 +257,23 @@ class Controls:
 
     if self.sm['model'].frameDropPerc > 20 and not SIMULATION:
       self.events.add(EventName.modeldLagging)
+    print("after a bunch of even calls and stuff")
 
     # Only allow engagement with brake pressed when stopped behind another stopped car
     if CS.brakePressed and self.sm['plan'].vTargetFuture >= STARTING_TARGET_SPEED \
       and self.CP.openpilotLongitudinalControl and CS.vEgo < 0.3:
       self.events.add(EventName.noTarget)
+    print("some code for brake holding")
+    print("update events ends")
 
   def data_sample(self):
     """Receive data from sockets and update carState"""
+    print("data sample, receiving data from sockets starts")
 
     # Update carState from CAN
     can_strs = messaging.drain_sock_raw(self.can_sock, wait_for_one=True)
     CS = self.CI.update(self.CC, can_strs)
+    print("car state")
 
     self.sm.update(0)
 
@@ -260,6 +283,7 @@ class Controls:
       self.can_rcv_error = True
     else:
       self.can_rcv_error = False
+    print("can timeout")
 
     # When the panda and controlsd do not agree on controls_allowed
     # we want to disengage openpilot. However the status from the panda goes through
@@ -272,11 +296,14 @@ class Controls:
       self.mismatch_counter += 1
 
     self.distance_traveled += CS.vEgo * DT_CTRL
+    print("controls mismatch stuff")
 
     return CS
+    print("data sample, end")
 
   def state_transition(self, CS):
     """Compute conditional state transitions and execute actions on state transitions"""
+    print("state transition start")
 
     self.v_cruise_kph_last = self.v_cruise_kph
 
@@ -285,12 +312,14 @@ class Controls:
       self.v_cruise_kph = update_v_cruise(self.v_cruise_kph, CS.buttonEvents, self.enabled)
     elif self.CP.enableCruise and CS.cruiseState.enabled:
       self.v_cruise_kph = CS.cruiseState.speed * CV.MS_TO_KPH
+    print("OP set speed logic")
 
     # decrease the soft disable timer at every step, as it's reset on
     # entrance in SOFT_DISABLING state
     self.soft_disable_timer = max(0, self.soft_disable_timer - 1)
 
     self.current_alert_types = [ET.PERMANENT]
+    print("soft disable timer")
 
     # ENABLED, PRE ENABLING, SOFT DISABLING
     if self.state != State.disabled:
@@ -351,17 +380,21 @@ class Controls:
 
     # Check if openpilot is engaged
     self.enabled = self.active or self.state == State.preEnabled
+    print(" state transition end, also stuff for state on entry")
 
   def state_control(self, CS):
     """Given the state, this function returns an actuators packet"""
+    print("state control")
 
     plan = self.sm['plan']
     path_plan = self.sm['pathPlan']
 
     actuators = car.CarControl.Actuators.new_message()
+    print("plan, plan path, and actuator stuff")
 
     if CS.leftBlinker or CS.rightBlinker:
       self.last_blinker_frame = self.sm.frame
+    print("blinker stuff")
 
     # State specific actions
 
@@ -401,9 +434,11 @@ class Controls:
         self.events.add(EventName.steerSaturated)
 
     return actuators, v_acc_sol, a_acc_sol, lac_log
+    print("end of state control, also stuff for steering alerts")
 
   def publish_logs(self, CS, start_time, actuators, v_acc, a_acc, lac_log):
     """Send actuators and hud commands to the car, send controlsstate and MPC logging"""
+    print("publish logs")
 
     CC = car.CarControl.new_message()
     CC.enabled = self.enabled
@@ -411,6 +446,7 @@ class Controls:
 
     CC.cruiseControl.override = True
     CC.cruiseControl.cancel = not self.CP.enableCruise or (not self.enabled and CS.cruiseState.enabled)
+    print("actuators and cruise control")
 
     # Some override values for Honda
     # brake discount removes a sharp nonlinearity
@@ -504,6 +540,7 @@ class Controls:
     controlsState.mapValid = self.sm['plan'].mapValid
     controlsState.forceDecel = bool(force_decel)
     controlsState.canErrorCounter = self.can_error_counter
+    print("controls state, blinker stuff, and events stuff")
 
     if self.CP.lateralTuning.which() == 'pid':
       controlsState.lateralControlState.pidState = lac_log
@@ -512,7 +549,8 @@ class Controls:
     elif self.CP.lateralTuning.which() == 'indi':
       controlsState.lateralControlState.indiState = lac_log
     self.pm.send('controlsState', dat)
-
+    print("tuning stuff")
+    
     # carState
     car_events = self.events.to_msg()
     cs_send = messaging.new_message('carState')
@@ -520,6 +558,7 @@ class Controls:
     cs_send.carState = CS
     cs_send.carState.events = car_events
     self.pm.send('carState', cs_send)
+    print("carstate")
 
     # carEvents - logged every second or on change
     if (self.sm.frame % int(1. / DT_CTRL) == 0) or (self.events.names != self.events_prev):
@@ -527,31 +566,37 @@ class Controls:
       ce_send.carEvents = car_events
       self.pm.send('carEvents', ce_send)
     self.events_prev = self.events.names.copy()
+    print("car events")
 
     # carParams - logged every 50 seconds (> 1 per segment)
     if (self.sm.frame % int(50. / DT_CTRL) == 0):
       cp_send = messaging.new_message('carParams')
       cp_send.carParams = self.CP
       self.pm.send('carParams', cp_send)
+    print("carparams")
 
     # carControl
     cc_send = messaging.new_message('carControl')
     cc_send.valid = CS.canValid
     cc_send.carControl = CC
     self.pm.send('carControl', cc_send)
+    print("car control")
 
     # copy CarControl to pass to CarInterface on the next iteration
     self.CC = CC
+    print("end of this section")
 
   def step(self):
     start_time = sec_since_boot()
     self.prof.checkpoint("Ratekeeper", ignore=True)
+    print("step start")
 
     # Sample data from sockets and get a carState
     CS = self.data_sample()
     self.prof.checkpoint("Sample")
 
     self.update_events(CS)
+    print("sample data and updating events")
 
     if not self.read_only:
       # Update control state
@@ -562,20 +607,24 @@ class Controls:
     actuators, v_acc, a_acc, lac_log = self.state_control(CS)
 
     self.prof.checkpoint("State Control")
+    print("read only, actuator stuff")
 
     # Publish data
     self.publish_logs(CS, start_time, actuators, v_acc, a_acc, lac_log)
     self.prof.checkpoint("Sent")
+    print("end of step")
 
   def controlsd_thread(self):
     while True:
       self.step()
       self.rk.monitor_time()
       self.prof.display()
+    print("stuff for controlsd thread")
 
 def main(sm=None, pm=None, logcan=None):
   controls = Controls(sm, pm, logcan)
   controls.controlsd_thread()
+  print("stuff for main")
 
 
 if __name__ == "__main__":
