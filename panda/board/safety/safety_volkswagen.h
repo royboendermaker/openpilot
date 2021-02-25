@@ -249,7 +249,7 @@ static int volkswagen_pq_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     }
 
     // Exit controls on rising edge of interceptor gas press
-    if ((addr == MSG_GAS_SENSOR) && (GET_BUS(to_push) == 2)) {
+    if ((addr == MSG_GAS_SENSOR) && (GET_BUS(to_push) == 0)) {
       gas_interceptor_detected = 1;
       controls_allowed = 1;
       int gas_interceptor = VOLKSWAGEN_GET_INTERCEPTOR(to_push);
