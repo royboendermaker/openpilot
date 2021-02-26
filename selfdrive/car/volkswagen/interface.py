@@ -90,28 +90,18 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.4
 
       # OP LONG parameters (https://github.com/commaai/openpilot/wiki/Tuning#Tuning-the-longitudinal-PI-controller)
-      
-      # !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
-      ret.gasMaxBP = [0., 1.]  # m/s
-      ret.gasMaxV = [0.3, 1.0]  # max gas allowed
-      # !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
-      ret.brakeMaxBP = [0.]  # m/s
-      ret.brakeMaxV = [1.]  # max brake allowed (positive number)
+      ret.gasMaxBP = [0., 1.]
+      ret.gasMaxV = [0.3, 1.0]
+      ret.brakeMaxBP = [0.]
+      ret.brakeMaxV = [1.]
+      ret.longitudinalTuning.deadzoneBP = [0.]
+      ret.longitudinalTuning.deadzoneV = [.1]
+      ret.longitudinalTuning.kpBP = [2.8, 8.3, 13.8, 22.2, 33.3]
+      ret.longitudinalTuning.kpV = [2.,   2.,  3.,   4.2,  6.]
+      ret.longitudinalTuning.kiBP = [2.8, 8.3, 13.8, 22.2, 33.3]
+      ret.longitudinalTuning.kiV = [2.,   1.,  1.2,  3.2,  3.]
       
       ret.openpilotLongitudinalControl = True
-      
-      #!!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
-      ret.longitudinalTuning.deadzoneBP = [0.]  #m/s
-      ret.longitudinalTuning.deadzoneV = [0.]  # if control-loops (internal) error value is within +/- this value -> the error is set to 0.0
-      
-      # P value !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
-      ret.longitudinalTuning.kpBP = [0.]  # m/s
-      ret.longitudinalTuning.kpV = [0.95]
-      
-      # I value !!!! DO NOT TUNE HERE -> THESE VALUES ARE IMMEDIATELY OVERWRITTEN IN selfdrive/controls/lib/longcontrol.py !!!!
-      ret.longitudinalTuning.kiBP = [0.]  # m/s
-      ret.longitudinalTuning.kiV = [0.12]
-
 
       # PQ lateral tuning HCA_Status 7
       ret.lateralTuning.pid.kpBP = [0., 14., 35.]
