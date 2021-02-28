@@ -3,7 +3,6 @@ import time
 import json
 
 import jwt
-import random, string
 from datetime import datetime, timedelta
 from common.api import api_get
 from common.params import Params
@@ -78,7 +77,7 @@ def register(spinner=None):
         resp = api_get("v2/pilotauth/", method='POST', timeout=15,
                        imei=imei1, imei2=imei2, serial=serial, public_key=public_key, register_token=register_token)
         dongleauth = json.loads(resp.text)
-        dongle_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+        dongle_id = dongleauth["dongle_id"]
         params.put("DongleId", dongle_id)
         break
       except Exception:

@@ -152,7 +152,7 @@ from selfdrive.launcher import launcher
 # comment out anything you don't want to run
 managed_processes = {
   "thermald": "selfdrive.thermald.thermald",
-  #"uploader": "selfdrive.loggerd.uploader",
+  "uploader": "selfdrive.loggerd.uploader",
   "deleter": "selfdrive.loggerd.deleter",
   "controlsd": "selfdrive.controls.controlsd",
   "plannerd": "selfdrive.controls.plannerd",
@@ -438,8 +438,8 @@ def manager_thread():
   subprocess.call("./bootlog", cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
 
   # start daemon processes
-  #for p in daemon_processes:
-  #  start_daemon_process(p)
+  for p in daemon_processes:
+    start_daemon_process(p)
 
   # start persistent processes
   for p in persistent_processes:
