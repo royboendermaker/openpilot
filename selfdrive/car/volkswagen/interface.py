@@ -21,6 +21,7 @@ class CarInterface(CarInterfaceBase):
     self.pqCounter = 0
     self.wheelGrabbed = False
     self.pqBypassCounter = 0
+    ret.hcaSwitch = False
 
   @staticmethod
   def compute_gb(accel, speed):
