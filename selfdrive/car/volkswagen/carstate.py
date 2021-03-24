@@ -18,6 +18,7 @@ class CarState(CarStateBase):
     self.radarOffset = 0.
     self.radarPosition = 2
     self.radarEpasType = 3
+    self.hcaSwitch = False
     ### END OF MAIN CONFIG OPTIONS ###
 
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
@@ -286,8 +287,6 @@ class CarState(CarStateBase):
     # later cruise-control button spamming.
     # FIXME: will need msg counter and checksum algo to spoof GRA_neu
     self.graMsgBusCounter = pt_cp.vl["GRA_Neu"]['GRA_Neu_Zaehler']
-    
-    self.hcaSwitch = False
 
     # Check to make sure the electric power steering rack is configured to
     # accept and respond to HCA_01 messages and has not encountered a fault.
