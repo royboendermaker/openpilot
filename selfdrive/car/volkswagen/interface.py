@@ -34,8 +34,6 @@ class CarInterface(CarInterfaceBase):
     ret.carName = "volkswagen"
     ret.radarOffCan = False
     
-    ret.hcaSwitch = False
-
     # Common default parameters that may be overridden per-vehicle
     ret.steerRateCost = 1.0
     ret.steerActuatorDelay = 0.1
