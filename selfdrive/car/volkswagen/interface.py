@@ -21,7 +21,6 @@ class CarInterface(CarInterfaceBase):
     self.pqCounter = 0
     self.wheelGrabbed = False
     self.pqBypassCounter = 0
-    self.CS.hcaSwitch = False
 
   @staticmethod
   def compute_gb(accel, speed):
@@ -34,6 +33,8 @@ class CarInterface(CarInterfaceBase):
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
     ret.carName = "volkswagen"
     ret.radarOffCan = False
+    
+    ret.hcaSwitch = False
 
     # Common default parameters that may be overridden per-vehicle
     ret.steerRateCost = 1.0
@@ -183,7 +184,7 @@ class CarInterface(CarInterfaceBase):
 
     #PQTIMEBOMB STUFF START
     #Warning alert for the 6min timebomb found on PQ's
-    self.CS.hcaSwitch = False
+    ret.hcaSwitch = False
     ret.stopSteering = False
     if True: #(self.frame % 100) == 0: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
@@ -198,7 +199,7 @@ class CarInterface(CarInterfaceBase):
         if self.wheelGrabbed or ret.steeringPressed or True:
           self.wheelGrabbed = True
           # ret.stopSteering = True
-          self.CS.hcaSwitch = True
+          ret.hcaSwitch = True
           self.pqBypassCounter += 1
           if self.pqBypassCounter >= 1.05*100: #time alloted for bypass
             self.wheelGrabbed = False
