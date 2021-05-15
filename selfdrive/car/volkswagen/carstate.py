@@ -189,6 +189,10 @@ class CarState(CarStateBase):
     
     #PQTIMEBOMB STUFF START
     #Warning alert for the 6min timebomb found on PQ's
+    # PQ timebomb bypass
+    self.pqCounter = 0
+    self.wheelGrabbed = False
+    self.pqBypassCounter = 0
     self.hcaSwitch = 5
     # ret.stopSteering = False
     if True: #(self.frame % 100) == 0: # Set this to false/False if you want to turn this feature OFF!

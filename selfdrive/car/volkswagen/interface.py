@@ -17,11 +17,6 @@ class CarInterface(CarInterfaceBase):
     # Set up an alias to PT/CAM parser for ACC depending on its detected network location
     self.cp_acc = self.cp if CP.networkLocation == NWL.fwdCamera else self.cp_cam
 
-    # PQ timebomb bypass
-    self.pqCounter = 0
-    self.wheelGrabbed = False
-    self.pqBypassCounter = 0
-
   @staticmethod
   def compute_gb(accel, speed):
     return float(accel) / 4.0
