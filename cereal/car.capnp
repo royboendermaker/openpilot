@@ -168,7 +168,7 @@ struct CarState {
   espDisabled @32 :Bool;
 
   stopSteering @37 :Bool; 	   # PQ Timebomb
-  hcaSwitch @41 :Bool;         # PQ HCA Flipping
+  # hcaSwitch @41 :Float32;         # PQ HCA Flipping (commented out, testing self in CS rather than ret)
 
   # cruise state
   cruiseState @10 :CruiseState;

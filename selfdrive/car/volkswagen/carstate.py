@@ -186,6 +186,8 @@ class CarState(CarStateBase):
 
 
     ret.standstill = ret.vEgoRaw < 0.1
+    
+    self.hcaSwitch = 5
 
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
@@ -287,7 +289,6 @@ class CarState(CarStateBase):
     # FIXME: will need msg counter and checksum algo to spoof GRA_neu
     self.graMsgBusCounter = pt_cp.vl["GRA_Neu"]['GRA_Neu_Zaehler']
     
-    ret.hcaSwitch = False
 
     # Check to make sure the electric power steering rack is configured to
     # accept and respond to HCA_01 messages and has not encountered a fault.
