@@ -176,13 +176,13 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.steerTempUnavailable)
       
     #PQTIMEBOMB event calling
-    if self.CS.pqTimebombWarn == True
+    if self.CS.pqTimebombWarn:
       events.add(EventName.pqTimebombWarn)
-    if self.CS.pqTimebombTERMINAL == True
+    if self.CS.pqTimebombTERMINAL:
       events.add(EventName.pqTimebombTERMINAL)
-    if self.CS.pqTimebombBypassed == True
+    if self.CS.pqTimebombBypassed:
       events.add(EventName.pqTimebombBypassed)
-    if self.CS.pqTimebombBypassing == True
+    if self.CS.pqTimebombBypassing:
       events.add(EventName.pqTimebombBypassing)
     #end of PQTIMEBOMB event calling
 
