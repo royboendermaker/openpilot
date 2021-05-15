@@ -220,6 +220,7 @@ class CarState(CarStateBase):
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
     #PQTIMEBOMB STUFF END
+    # NEED TO MOVE ALERTS BACK TO INTERFACE VIA self.CS.event CALL
 
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
