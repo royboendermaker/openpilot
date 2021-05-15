@@ -194,29 +194,39 @@ class CarState(CarStateBase):
     self.wheelGrabbed = False
     self.pqBypassCounter = 0
     self.hcaSwitch = 5
+    
+    self.pqTimebombWarn = False
+    self.pqTimebombTERMINAL = False
+    self.pqTimebombBypassed = False
+    self.pqTimebombBypassing = False
+    
     # ret.stopSteering = False
     if True: #(self.frame % 100) == 0: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
         self.pqCounter += 1
       if self.pqCounter >= 330*100: #time in seconds until counter threshold for pqTimebombWarn alert
         if not self.wheelGrabbed:
-          events.add(EventName.pqTimebombWarn)
+          # events.add(EventName.pqTimebombWarn)
+          self.pqTimebombWarn = True
           if self.pqCounter >= 345*100: #time in seconds until pqTimebombTERMINAL
-            events.add(EventName.pqTimebombTERMINAL)
+            # events.add(EventName.pqTimebombTERMINAL)
+            self.pqTimebombTERMINAL = True
             if self.pqCounter >= 359*100: #time in seconds until auto bypass
               self.wheelGrabbed = True
-        if self.wheelGrabbed or ret.steeringPressed or True:
-          self.wheelGrabbed = 7
+        if True: # self.wheelGrabbed or ret.steeringPressed:
+          self.wheelGrabbed = True
           # ret.stopSteering = True
-          self.hcaSwitch = True
+          self.hcaSwitch = 7
           self.pqBypassCounter += 1
-          if self.pqBypassCounter >= 1.05*100: #time alloted for bypass
+          if self.pqBypassCounter >= 30*100: #time alloted for bypass
             self.wheelGrabbed = False
             self.pqCounter = 0
             self.pqBypassCounter = 0
-            events.add(EventName.pqTimebombBypassed)
+            # events.add(EventName.pqTimebombBypassed)
+            self.pqTimebombBypassed = True
           else:
-            events.add(EventName.pqTimebombBypassing)
+            # events.add(EventName.pqTimebombBypassing)
+            self.pqTimebombBypassing = True
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
     #PQTIMEBOMB STUFF END
