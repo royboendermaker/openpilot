@@ -193,42 +193,34 @@ class CarState(CarStateBase):
     self.pqCounter = 0
     self.wheelGrabbed = False
     self.pqBypassCounter = 0
-    self.hcaSwitch = 5
     
-    self.pqTimebombWarn = False
-    self.pqTimebombTERMINAL = False
-    self.pqTimebombBypassed = False
-    self.pqTimebombBypassing = False
+    if self.hcaSwitch != 5 or 7: #not sure if this is needed
+      self.hcaSwitch = 3
     
     # ret.stopSteering = False
-    if True: #(self.frame % 100) == 0: # Set this to false/False if you want to turn this feature OFF!
+    if True: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
+        self.hcaSwitch = 5
+        self.pqTimebombTERMINAL = False
+        self.pqTimebombBypassed = False
+        self.pqTimebombBypassing = False
         self.pqCounter += 1
-      if self.pqCounter >= 330*100: #time in seconds until counter threshold for pqTimebombWarn alert
-        if not self.wheelGrabbed:
-          # events.add(EventName.pqTimebombWarn)
-          self.pqTimebombWarn = True
-          if self.pqCounter >= 345*100: #time in seconds until pqTimebombTERMINAL
-            # events.add(EventName.pqTimebombTERMINAL)
-            self.pqTimebombTERMINAL = True
-            if self.pqCounter >= 359*100: #time in seconds until auto bypass
-              self.wheelGrabbed = True
-        if True: # self.wheelGrabbed or ret.steeringPressed:
-          self.wheelGrabbed = True
-          # ret.stopSteering = True
-          self.hcaSwitch = 7
-          self.pqBypassCounter += 1
-          if self.pqBypassCounter >= 30*100: #time alloted for bypass
-            self.wheelGrabbed = False
-            self.pqCounter = 0
-            self.pqBypassCounter = 0
-            # events.add(EventName.pqTimebombBypassed)
-            self.pqTimebombBypassed = True
-          else:
-            # events.add(EventName.pqTimebombBypassing)
-            self.pqTimebombBypassing = True
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
+      if self.pqCounter >= 30*100: #time in seconds until counter threshold for pqTimebombWarn alert
+        self.wheelGrabbed = True
+        # ret.stopSteering = True
+        self.hcaSwitch = 7
+        self.pqBypassCounter += 1
+        if self.pqBypassCounter >= 30*100: #time alloted for bypass
+          self.wheelGrabbed = False
+          self.pqCounter = 0
+          self.pqBypassCounter = 0
+          # events.add(EventName.pqTimebombBypassed)
+          self.pqTimebombBypassed = True
+        else:
+          # events.add(EventName.pqTimebombBypassing)
+          self.pqTimebombBypassing = True
     #PQTIMEBOMB STUFF END
     # NEED TO MOVE ALERTS BACK TO INTERFACE VIA self.CS.event CALL
 
