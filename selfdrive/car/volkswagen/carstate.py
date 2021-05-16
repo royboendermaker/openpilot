@@ -197,7 +197,6 @@ class CarState(CarStateBase):
     if self.hcaSwitch != 5 or 7: #not sure if this is needed
       self.hcaSwitch = 3
     
-    # ret.stopSteering = False
     if True: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
         self.hcaSwitch = 5
@@ -205,21 +204,21 @@ class CarState(CarStateBase):
         self.pqTimebombBypassed = False
         self.pqTimebombBypassing = False
         self.pqCounter += 1
+        print("CC enabled, you should be seeing hcaSwitch: 5")
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
-      if self.pqCounter >= 30*100: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
         self.wheelGrabbed = True
-        # ret.stopSteering = True
         self.hcaSwitch = 7
         self.pqBypassCounter += 1
-        if self.pqBypassCounter >= 30*100: #time alloted for bypass
+        print("Engaged for minimum of 45 seconds, you should be seeing hcaSwitch: 7")
+        if self.pqBypassCounter >= 45*100: #time alloted for bypass
           self.wheelGrabbed = False
           self.pqCounter = 0
           self.pqBypassCounter = 0
-          # events.add(EventName.pqTimebombBypassed)
           self.pqTimebombBypassed = True
+          print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
         else:
-          # events.add(EventName.pqTimebombBypassing)
           self.pqTimebombBypassing = True
     #PQTIMEBOMB STUFF END
     # NEED TO MOVE ALERTS BACK TO INTERFACE VIA self.CS.event CALL
