@@ -207,6 +207,7 @@ class CarState(CarStateBase):
         print("pqCounter Value", self.pqCounter)
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
+        self.hcaSwitch = 5
       if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
         self.wheelGrabbed = True
         self.hcaSwitch = 7
