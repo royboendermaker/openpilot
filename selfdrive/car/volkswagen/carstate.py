@@ -200,11 +200,11 @@ class CarState(CarStateBase):
     if True: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
         self.hcaSwitch = 5
-        self.pqTimebombTERMINAL = False
         self.pqTimebombBypassed = False
         self.pqTimebombBypassing = False
         self.pqCounter += 1
         print("CC enabled, you should be seeing hcaSwitch: 5")
+        print("pqCounter Value", self.pqCounter)
       if not ret.cruiseState.enabled:
         self.pqCounter = 0
       if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
@@ -218,6 +218,7 @@ class CarState(CarStateBase):
           self.pqBypassCounter = 0
           self.pqTimebombBypassed = True
           print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
+          print("pqBypassCounter Value", self.pqBypassCounter)
         else:
           self.pqTimebombBypassing = True
     #PQTIMEBOMB STUFF END
