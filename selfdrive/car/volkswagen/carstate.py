@@ -20,9 +20,6 @@ class CarState(CarStateBase):
     self.radarEpasType = 3
     ### END OF MAIN CONFIG OPTIONS ###
 
-    #PQTIMEBOMB STUFF START
-    #Warning alert for the 6min timebomb found on PQ's
-    # PQ timebomb bypass
     self.hcaSwitch = 5
     self.pqCounter = 0
     self.wheelGrabbed = False
@@ -32,6 +29,15 @@ class CarState(CarStateBase):
     self.cruiseControlEnabled = False
 
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
+      # Configure for PQ35/PQ46/NMS network messaging
+      self.get_can_parser = self.get_pq_can_parser
+      self.get_cam_can_parser = self.get_pq_cam_can_parser
+      self.update = self.update_pq
+      if CP.transmissionType == TRANS.automatic:
+        self.shifter_values = can_define.dv["Getriebe_1"]['Waehlhebelposition__Getriebe_1_']
+      if CP.enableGasInterceptor:
+        self.openpilot_enabled = False
+
       if self.cruiseControlEnabled: #todo: make this only count when HCA is being sent
         self.pqCounter += 1
         print("pqCounter Value", self.pqCounter)
@@ -51,17 +57,6 @@ class CarState(CarStateBase):
           print("pqBypassCounter Value", self.pqBypassCounter)
         else:
           self.pqTimebombBypassing = True
-    #PQTIMEBOMB STUFF END
-
-    if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
-      # Configure for PQ35/PQ46/NMS network messaging
-      self.get_can_parser = self.get_pq_can_parser
-      self.get_cam_can_parser = self.get_pq_cam_can_parser
-      self.update = self.update_pq
-      if CP.transmissionType == TRANS.automatic:
-        self.shifter_values = can_define.dv["Getriebe_1"]['Waehlhebelposition__Getriebe_1_']
-      if CP.enableGasInterceptor:
-        self.openpilot_enabled = False
     else:
       # Configure for MQB network messaging (default)
       self.get_can_parser = self.get_mqb_can_parser
