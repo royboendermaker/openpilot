@@ -162,7 +162,6 @@ class CarState(CarStateBase):
       # ACC okay and enabled, currently engaged and regulating speed (3) or engaged with driver accelerating (4) or overrun (5)
       ret.cruiseState.available = True
       ret.cruiseState.enabled = True
-      self.cruiseControlEnabled = True
     else:
       # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
       ret.cruiseState.available = False
@@ -273,6 +272,8 @@ class CarState(CarStateBase):
     # FIXME: This is unfinished and not fully correct, need to improve further
     ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
     ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
+    if ret.cruiseState.enabled:
+      self.cruiseControlEnabled = True
 
     # Set override flag for openpilot enabled state.
     if self.CP.enableGasInterceptor and pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
