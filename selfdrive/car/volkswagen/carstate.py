@@ -27,6 +27,7 @@ class CarState(CarStateBase):
     self.pqTimebombBypassed = False
     self.pqTimebombBypassing = False
     self.cruiseControlEnabled = False
+    self.printCounter = 0
 
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
       # Configure for PQ35/PQ46/NMS network messaging
@@ -40,23 +41,28 @@ class CarState(CarStateBase):
 
       if self.cruiseControlEnabled: #todo: make this only count when HCA is being sent
         self.pqCounter += 1
-        print("pqCounter Value", self.pqCounter)
+        self.printCounter +=1
       if not self.cruiseControlEnabled:
         self.pqCounter = 0
       if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
         self.wheelGrabbed = True
         self.hcaSwitch = 7
         self.pqBypassCounter += 1
-        print("Engaged for minimum of 45 seconds, you should be seeing hcaSwitch: 7")
+        if self.printCounter >= 100:
+          print("Engaged for minimum of 45 seconds, you should be seeing hcaSwitch: 7")
         if self.pqBypassCounter >= 45*100: #time alloted for bypass
           self.wheelGrabbed = False
           self.pqCounter = 0
           self.pqBypassCounter = 0
           self.pqTimebombBypassed = True
-          print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
-          print("pqBypassCounter Value", self.pqBypassCounter)
+          if self.printCounter >= 100:
+            print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
+            print("pqBypassCounter Value", self.pqBypassCounter)
         else:
           self.pqTimebombBypassing = True
+      if self.printCounter >= 100:
+        print("pqCounter Value", self.pqCounter)
+        self.printCounter = 0
     else:
       # Configure for MQB network messaging (default)
       self.get_can_parser = self.get_mqb_can_parser
