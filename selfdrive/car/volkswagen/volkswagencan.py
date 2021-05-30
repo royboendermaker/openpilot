@@ -72,8 +72,8 @@ def create_pq_steering_control(packer, bus, apply_steer, CS, idx, lkas_enabled):
     "HCA_Status": CS.hcaSwitch if (lkas_enabled and apply_steer != 0) else 3,
     "Vib_Freq": 16,
   }
+  print("hcaSwitch value from VWCAN", CS.hcaSwitch)
 
-  print(CS.hcaSwitch)
   dat = packer.make_can_msg("HCA_1", bus, values)[2]
   values["HCA_Checksumme"] = dat[1] ^ dat[2] ^ dat[3] ^ dat[4]
   return packer.make_can_msg("HCA_1", bus, values)

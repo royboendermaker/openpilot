@@ -20,6 +20,39 @@ class CarState(CarStateBase):
     self.radarEpasType = 3
     ### END OF MAIN CONFIG OPTIONS ###
 
+    #PQTIMEBOMB STUFF START
+    #Warning alert for the 6min timebomb found on PQ's
+    # PQ timebomb bypass
+    self.hcaSwitch = 5
+    self.pqCounter = 0
+    self.wheelGrabbed = False
+    self.pqBypassCounter = 0
+    self.pqTimebombBypassed = False
+    self.pqTimebombBypassing = False
+    self.cruiseControlEnabled = False
+
+    if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
+      if self.cruiseControlEnabled: #todo: make this only count when HCA is being sent
+        self.pqCounter += 1
+        print("pqCounter Value", self.pqCounter)
+      if not self.cruiseControlEnabled:
+        self.pqCounter = 0
+      if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
+        self.wheelGrabbed = True
+        self.hcaSwitch = 7
+        self.pqBypassCounter += 1
+        print("Engaged for minimum of 45 seconds, you should be seeing hcaSwitch: 7")
+        if self.pqBypassCounter >= 45*100: #time alloted for bypass
+          self.wheelGrabbed = False
+          self.pqCounter = 0
+          self.pqBypassCounter = 0
+          self.pqTimebombBypassed = True
+          print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
+          print("pqBypassCounter Value", self.pqBypassCounter)
+        else:
+          self.pqTimebombBypassing = True
+    #PQTIMEBOMB STUFF END
+
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
       # Configure for PQ35/PQ46/NMS network messaging
       self.get_can_parser = self.get_pq_can_parser
@@ -134,6 +167,7 @@ class CarState(CarStateBase):
       # ACC okay and enabled, currently engaged and regulating speed (3) or engaged with driver accelerating (4) or overrun (5)
       ret.cruiseState.available = True
       ret.cruiseState.enabled = True
+      self.cruiseControlEnabled = True
     else:
       # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
       ret.cruiseState.available = False
@@ -187,40 +221,6 @@ class CarState(CarStateBase):
 
     ret.standstill = ret.vEgoRaw < 0.1
     
-    #PQTIMEBOMB STUFF START
-    #Warning alert for the 6min timebomb found on PQ's
-    # PQ timebomb bypass
-    self.hcaSwitch = 5
-    self.pqCounter = 0
-    self.wheelGrabbed = False
-    self.pqBypassCounter = 0
-    
-    if True: # Set this to false/False if you want to turn this feature OFF!
-      if ret.cruiseState.enabled:
-        self.pqTimebombBypassed = False
-        self.pqTimebombBypassing = False
-        self.pqCounter += 1
-        print("CC enabled, you should be seeing hcaSwitch: 5")
-        print("pqCounter Value", self.pqCounter)
-      if not ret.cruiseState.enabled:
-        self.pqCounter = 0
-      if self.pqCounter >= 45*100: #time in seconds until counter threshold for pqTimebombWarn alert
-        self.wheelGrabbed = True
-        self.hcaSwitch = 7
-        self.pqBypassCounter += 1
-        print("Engaged for minimum of 45 seconds, you should be seeing hcaSwitch: 7")
-        if self.pqBypassCounter >= 45*100: #time alloted for bypass
-          self.wheelGrabbed = False
-          self.pqCounter = 0
-          self.pqBypassCounter = 0
-          self.pqTimebombBypassed = True
-          print("In pqBypassCounter now, you should be seeing hcaSwitch: 5")
-          print("pqBypassCounter Value", self.pqBypassCounter)
-        else:
-          self.pqTimebombBypassing = True
-    #PQTIMEBOMB STUFF END
-    # NEED TO MOVE ALERTS BACK TO INTERFACE VIA self.CS.event CALL
-
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
     ret.steeringAngle = pt_cp.vl["Lenkhilfe_3"]['LH3_BLW'] * (1, -1)[int(pt_cp.vl["Lenkhilfe_3"]['LH3_BLWSign'])]
