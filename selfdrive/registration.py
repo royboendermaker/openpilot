@@ -78,11 +78,13 @@ def register(spinner=None):
         resp = api_get("v2/pilotauth/", method='POST', timeout=15,
                        imei=imei1, imei2=imei2, serial=serial, public_key=public_key, register_token=register_token)
         dongleauth = json.loads(resp.text)
-        if dongleauth["dongle_id"] = None:
-          dongle_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+        if resp.status_code == 402:
+          cloudlog.info("Uknown serial number while trying to register device")
+          dongle_id = None
         else:
+          dongleauth = json.loads(resp.text)
           dongle_id = dongleauth["dongle_id"]
-        params.put("DongleId", dongle_id)
+          params.put("DongleId", dongle_id)
         break
       except Exception:
         cloudlog.exception("failed to authenticate")
