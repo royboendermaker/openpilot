@@ -64,12 +64,12 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
 #                                                                         #
 # ----------------------------------------------------------------------- #
 
-def create_pq_steering_control(packer, bus, apply_steer, idx, lkas_enabled):
+def create_pq_steering_control(packer, bus, apply_steer, idx, lkas_enabled, frame):
   values = {
     "HCA_Zaehler": idx,
     "LM_Offset": abs(apply_steer),
     "LM_OffSign": 1 if apply_steer < 0 else 0,
-    "HCA_Status": 7 if (lkas_enabled and apply_steer != 0) else 3,
+    "HCA_Status": 7 if (lkas_enabled and apply_steer != 0 and frame % 36000 < 35880) else 5 if (lkas_enabled and apply_steer != 0) else 3,
     "Vib_Freq": 16,
   }
 
