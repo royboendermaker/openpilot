@@ -64,7 +64,7 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
 #                                                                         #
 # ----------------------------------------------------------------------- #
 
-def create_pq_steering_control(packer, bus, apply_steer, idx, lkas_enabled, frame):
+def create_pq_steering_control(packer, bus, apply_steer, idx, lkas_enabled):
   values = {
     "HCA_Zaehler": idx,
     "LM_Offset": abs(apply_steer),
