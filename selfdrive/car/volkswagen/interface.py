@@ -186,16 +186,16 @@ class CarInterface(CarInterfaceBase):
     if True: #(self.frame % 100) == 0: # Set this to false/False if you want to turn this feature OFF!
       if ret.cruiseState.enabled:
         self.pqCounter += 1
-      if self.pqCounter >= 330*100: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter >= 330*1000: #time in seconds until counter threshold for pqTimebombWarn alert
         if not self.wheelGrabbed:
           events.add(EventName.pqTimebombWarn)
-          if self.pqCounter >= 345*100: #time in seconds until pqTimebombTERMINAL
+          if self.pqCounter >= 345*1000: #time in seconds until pqTimebombTERMINAL
             events.add(EventName.pqTimebombTERMINAL)
-            if self.pqCounter >= 359*100: #time in seconds until auto bypass
+            if self.pqCounter >= 359*1000: #time in seconds until auto bypass
               self.wheelGrabbed = True
         if self.wheelGrabbed or ret.steeringPressed:
           self.wheelGrabbed = True
-          ret.stopSteering = True
+          ret.stopSteering = False
           self.pqBypassCounter += 1
           if self.pqBypassCounter >= 1.05*100: #time alloted for bypass
             self.wheelGrabbed = False
