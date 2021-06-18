@@ -96,8 +96,8 @@ def create_pq_awv_control(packer, bus, idx, led_orange, led_green, abs_working):
     "AWV_2_Fehler" : 1 if led_orange else 0,
     "AWV_2_Status" : 1 if led_green else 0,
     "AWV_Zaehler": idx,
-    "AWV_Text": 9,
-    "AWV_Infoton": 1, # if (abs_working == 5) else 0,
+    "AWV_Text": abs_working,
+    "AWV_Infoton": 1 if (abs_working == 5) else 0,
   }
 
   dat = packer.make_can_msg("mAWV", bus, values)[2]
