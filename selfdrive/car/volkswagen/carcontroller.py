@@ -2,7 +2,7 @@ from cereal import car
 from common.numpy_fast import clip
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.volkswagen import volkswagencan
-from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, MQB_LDW_MESSAGES, BUTTON_STATES, CarControllerParams
+from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, MQB_LDW_MESSAGES, BUTTON_STATES, CarControllerParams, PQ_LDW_MESSAGES
 from opendbc.can.packer import CANPacker
 
 class CarController():
@@ -223,9 +223,9 @@ class CarController():
       hcaEnabled = True if enabled and not CS.out.standstill else False
 
       if visual_alert == car.CarControl.HUDControl.VisualAlert.steerRequired:
-        hud_alert = MQB_LDW_MESSAGES["laneAssistTakeOverSilent"]
+        hud_alert = PQ_LDW_MESSAGES["laneAssistTakeOver"]
       else:
-        hud_alert = MQB_LDW_MESSAGES["none"]
+        hud_alert = PQ_LDW_MESSAGES["none"]
 
       can_sends.append(self.create_hud_control(self.packer_pt, CANBUS.pt, hcaEnabled,
                                                             CS.out.steeringPressed, hud_alert, leftLaneVisible,

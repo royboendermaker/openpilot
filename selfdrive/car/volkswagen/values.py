@@ -55,6 +55,21 @@ MQB_LDW_MESSAGES = {
   "laneAssistDeactivated": 10,          # "Lane Assist deactivated." silent with persistent icon afterward
 }
 
+PQ_LDW_MESSAGES = {
+  "none": 0,                            # Nothing to display
+  "laneAssistUnavail": 1,               # "Lane Assist currently not available."
+  "laneAssistUnavailSysError": 2,       # "Lane Assist system error"
+  "laneAssistUnavailNoSensorView": 3,   # "Lane Assist not available. No sensor view."
+  "laneAssistTakeOver": 4,              # "Lane Assist: Please Take Over Steering"
+  "laneAssistDeactivTrailer": 5,        # "Lane Assist: no function with trailer"
+}
+
+PQ_LDW_SOUND = {
+  "none": 0,                            # silent
+  "info_chime": 1,                      
+  "warn_chime": 2,                     
+}
+
 class CAR:
   GENERICMQB = "Generic Volkswagen MQB Platform Vehicle"
   GENERICPQ = "Generic Volkswagen PQ35/PQ46/NMS Platform Vehicle"
