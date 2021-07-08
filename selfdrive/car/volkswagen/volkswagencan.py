@@ -91,13 +91,17 @@ def create_pq_braking_control(packer, bus, apply_brake, idx, brake_enabled, brak
   values["PQ_MOB_CHECKSUM"] = dat[1] ^ dat[2] ^ dat[3] ^ dat[4] ^ dat[5]
   return packer.make_can_msg("MOB_1", bus, values)
 
-def create_pq_awv_control(packer, bus, idx, led_orange, led_green, abs_working):
+def create_pq_awv_control(packer, bus, idx, led_orange, led_green, abs_working, apply_steer, lkas_enabled):
   values = {
     "AWV_2_Fehler" : 1 if led_orange else 0,
     "AWV_2_Status" : 1 if led_green else 0,
     "AWV_Zaehler": idx,
     "AWV_Text": abs_working,
     "AWV_Infoton": 1 if (abs_working == 5) else 0,
+    "ACA_V_Wunsch": 100 if (lkas_enabled and apply_steer != 0) else 0, #need to set this to v_ego if it works
+    "ACA_kmh_mph": 1, #sets ACC screen to MPH (i think)
+    "ACA_AnzDisplay": 1, #unsure of what this does, something about enabling a display maybe?
+    "ACA_Fahrerhinw": 0, #driver advice? perhaps asks user to take over
   }
 
   dat = packer.make_can_msg("mAWV", bus, values)[2]
