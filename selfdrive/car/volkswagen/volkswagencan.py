@@ -102,6 +102,7 @@ def create_pq_awv_control(packer, bus, idx, led_orange, led_green, abs_working, 
     "ACA_kmh_mph": 1, #sets ACC screen to MPH (i think)
     "ACA_AnzDisplay": 1, #unsure of what this does, something about enabling a display maybe?
     "ACA_Fahrerhinw": 0, #driver advice? perhaps asks user to take over
+    "ACA_gemZeitl": 0, #adding 1 more message, should display how far away a car is in seconds? not sure.
   }
 
   dat = packer.make_can_msg("mAWV", bus, values)[2]
