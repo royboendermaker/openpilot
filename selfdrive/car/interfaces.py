@@ -81,7 +81,7 @@ class CarInterfaceBase():
   def apply(self, c):
     raise NotImplementedError
 
-  def create_common_events(self, cs_out, extra_gears=[], gas_resume_speed=-1):
+  def create_common_events(self, cs_out, extra_gears=[], gas_resume_speed=40):
     events = []
 
     if cs_out.doorOpen:
