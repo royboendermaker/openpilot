@@ -90,11 +90,11 @@ def create_pq_braking_control(packer, bus, apply_brake, idx, brake_enabled, brak
 
 def create_pq_hud_control(packer, bus, hca_enabled, steering_pressed, hud_alert, leftLaneVisible, rightLaneVisible):
   if hca_enabled:
-    leftlanehud = 3 if leftLaneVisible else 1
-    rightlanehud = 3 if rightLaneVisible else 1
-  else:
     leftlanehud = 2 if leftLaneVisible else 1
     rightlanehud = 2 if rightLaneVisible else 1
+  else:
+    leftlanehud = 0 if leftLaneVisible else 0
+    rightlanehud = 0 if rightLaneVisible else 0
 
   values = {
     "Right_Lane_Status": rightlanehud,
