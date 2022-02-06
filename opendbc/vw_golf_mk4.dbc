@@ -1261,6 +1261,17 @@ BO_ 428 Bremse_8: 8 XXX
   SG_ GK2_Kessy_StSt_Info : 56|2@1+ (1,0) [0|3] "" XXX
   SG_ GK2_BEM_StSt_Info : 58|2@1+ (1,0) [0|3] "" XXX
 
+ BO_ 954 SWA_1: 8 SWA
+  SG_ SWA_Textbits : 12|4@1+ (1,0) [0|15] ""  XXX
+  SG_ SWA_Gong : 16|2@1+ (1,0) [0|3] ""  XXX
+  SG_ SWA_Sta_passiv : 19|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_Sta_aktiv : 20|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_Infostufe_SWA_li : 26|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_Warnung_SWA_li : 27|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_Infostufe_SWA_re : 42|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_Warnung_SWA_re : 43|1@1+ (1,0) [0|1] ""  XXX
+  SG_ SWA_KD_Fehler : 59|1@1+ (1,0) [0|1] ""  XXX
+
  BO_ 1175 Parkhilfe_01: 8 XXX
   SG_ PH_Abschaltursache : 13|3@1+ (1,0) [0|7] "" XXX
   SG_ PH_Opt_Anzeige_V_ein : 16|1@1+ (1,0) [0|1] "" XXX
