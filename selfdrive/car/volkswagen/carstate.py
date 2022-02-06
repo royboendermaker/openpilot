@@ -211,6 +211,19 @@ class CarState(CarStateBase):
     # We use the speed preference for OP.
     self.displayMetricUnits = not pt_cp.vl["Einheiten_1"]["MFA_v_Einheit_02"]
 
+    # Consume blind-spot monitoring info/warning LED states, if available. The
+    # info signal (LED on) is enabled whenever a vehicle is detected in the
+    # driver's blind spot. The warning signal (LED flashing) is enabled if the
+    # driver shows possibly hazardous intent toward a BSM detected vehicle, by
+    # setting the turn signal in that direction, or (for cars with factory Lane
+    # Assist) approaches the lane boundary in that direction. Size of the BSM
+    # detection box is dynamic based on speed and road curvature.
+    # Refer to VW Self Study Program 890253: Volkswagen Driver Assist Systems,
+    # pages 32-35.
+    if self.CP.enableBsm:
+      ret.leftBlindspot = bool(ext_cp.vl["SWA_1"]["SWA_Infostufe_SWA_li"]) or bool(ext_cp.vl["SWA_1"]["SWA_Warnung_SWA_li"])
+      ret.rightBlindspot = bool(ext_cp.vl["SWA_1"]["SWA_Infostufe_SWA_re"]) or bool(ext_cp.vl["SWA_1"]["SWA_Warnung_SWA_re"])
+    
     # Update ACC radar status.
     # FIXME: This is unfinished and not fully correct, need to improve further
     ret.cruiseState.available = bool(pt_cp.vl["GRA_neu"]['Hauptschalter'])
