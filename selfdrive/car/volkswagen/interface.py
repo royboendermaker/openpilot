@@ -86,6 +86,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 1330 + STD_CARGO_KG  # Average, varies on trim/package
       ret.wheelbase = 2.40
       ret.centerToFront = ret.wheelbase * 0.45  # Estimated
+      ret.minEnableSpeed = 4.5
       ret.steerRatio = 16.4
       tire_stiffness_factor = 1.0
 
@@ -169,6 +170,10 @@ class CarInterface(CarInterfaceBase):
     # Attempt OP engagement only on rising edge of stock ACC engagement.
     elif not self.cruise_enabled_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
+      
+    if ret.cruiseState.enabled and ret.vEgo < self.CP.minEnableSpeed:
+       self.graButtonStatesToSend = BUTTON_STATES.copy()
+       self.graButtonStatesToSend["Cancel"] = True
 
     ret.stopSteering = False
     if True: #(self.frame % 100) == 0:
