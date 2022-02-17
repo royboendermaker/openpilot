@@ -173,7 +173,7 @@ class CarInterface(CarInterfaceBase):
       
     if ret.cruiseState.enabled and ret.vEgo < self.CP.minEnableSpeed:
        self.graButtonStatesToSend = BUTTON_STATES.copy()
-       self.graButtonStatesToSend["Cancel"] = True
+       self.graButtonStatesToSend["cancel"] = True
 
     ret.stopSteering = False
     if True: #(self.frame % 100) == 0:
