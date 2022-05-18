@@ -216,28 +216,22 @@ class CarState(CarStateBase):
     ret.cruiseState.available = True
     
     # Set override flag for openpilot enabled state.
-    if self.CP.enableGasInterceptor and pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
+    if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
       self.openpilot_enabled = True
       self.univACCenabled = True
     else:
-      if (ret.gasPressed or ret.brakePressed):
+      if (ret.brakePressed):
         self.univACCenabled = False
 
-    # Auto re-engage long after brake under 15mph
-    if (self.univACCenabled or self.univACCtempHold) and ret.vEgo <= 15 and ret.brakePressed:
+    # Auto re-engage long after brake and > 15kmh
+    if (self.univACCenabled or self.univACCtempHold) and (ret.vEgo <= 4.5 or ret.brakePressed):
       self.univACCtempHold = True
     else:
       if self.univACCtempHold:
         self.univACCtempHold = False
         self.univACCenabled = True
 
-    # Override openpilot enabled if gas interceptor installed
-    if self.CP.enableGasInterceptor and self.openpilot_enabled:
-      ret.cruiseState.enabled = True
-    else:
-      ret.cruiseState.enabled = False
-
-    if self.CP.enableGasInterceptor and self.univACCenabled and not pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
+    if self.univACCenabled and not pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
       ret.univACCenabled = True
     else:
       ret.univACCenabled = False
@@ -248,8 +242,8 @@ class CarState(CarStateBase):
     if ret.cruiseState.speed > 70:  # 255 kph in m/s == no current setpoint
       ret.cruiseState.speed = 0
       
-    # Check if Gas or Brake pressed cancel OP ACC
-    if (ret.gasPressed or ret.brakePressed) and (ret.cruiseState.speed == 0 and self.openpilot_enabled):
+    # Check if Brake pressed or speed < 15 kmh cancel OP ACC
+    if (ret.brakePressed) and (ret.cruiseState.speed <= 4.5 and self.openpilot_enabled):
       self.openpilot_enabled = False
 
     # Update control button states for turn signals and ACC controls.
