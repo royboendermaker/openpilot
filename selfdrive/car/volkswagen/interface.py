@@ -5,6 +5,7 @@ from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, NWL, TRANS, GEAR
 from common.params import Params
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.car.volkswagen.carstate import vEgo
 
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
