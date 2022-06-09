@@ -202,17 +202,10 @@ class CarController():
         # Cancel ACC if it's engaged with OP disengaged.
         self.graButtonStatesToSend = BUTTON_STATES.copy()
         self.graButtonStatesToSend["cancel"] = True
-      elif enabled and CS.out.standstill:
-        # Blip the Resume button if we're engaged at standstill.
-        # FIXME: This is a naive implementation, improve with visiond or radar input.
-        # A subset of MQBs like to "creep" too aggressively with this implementation.
+      if enabled and CS.out.vEgo < 8:
         self.graButtonStatesToSend = BUTTON_STATES.copy()
-        self.graButtonStatesToSend["resumeCruise"] = True
-
-      if enabled and self.ACCSlowDown:
-        self.graButtonStatesToSend = BUTTON_STATES.copy()
-        self.graButtonStatesToSend["decelCruiseLong"] = True
-        self.ACCSlowDown = False
+        self.graButtonStatesToSend["cancel"] = True
+        events.append(create_event('steerTempUnavailableMute', [ET.WARNING]))
 
     # OP/Panda can see this message but can't filter it when integrated at the
     # R242 LKAS camera. It could do so if integrated at the J533 gateway, but
