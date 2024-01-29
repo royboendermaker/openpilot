@@ -32,14 +32,14 @@ class CarInterface(CarInterfaceBase):
     ret.radarOffCan = False
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
     ret.steerRateCost = 1.0
-    ret.steerActuatorDelay = 0.05  # Hopefully all racks are similar here
+    ret.steerActuatorDelay = 0.1  # Hopefully all racks are similar here
     ret.steerLimitTimer = 0.4
 
     # Override these per-car as necessary
     ret.lateralTuning.pid.kpBP = [0.]
     ret.lateralTuning.pid.kiBP = [0.]
-    ret.lateralTuning.pid.kpV = [0.6]
-    ret.lateralTuning.pid.kiV = [0.2]
+    ret.lateralTuning.pid.kpV = [0.3]
+    ret.lateralTuning.pid.kiV = [0.1]
     ret.lateralTuning.pid.kf = 0.00006
 
     # PER-PLATFORM PARAMETERS - DO NOT EDIT HERE TO TUNE INDIVIDUAL VEHICLES
@@ -83,8 +83,8 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 1.0
 
     elif candidate == CAR.GENERICPQ:
-      ret.mass = 1330 + STD_CARGO_KG  # Average, varies on trim/package
-      ret.wheelbase = 2.40
+      ret.mass = 1375 + STD_CARGO_KG  # Average, varies on trim/package
+      ret.wheelbase = 2.58
       ret.centerToFront = ret.wheelbase * 0.45  # Estimated
       ret.steerRatio = 16.4
       tire_stiffness_factor = 1.0
@@ -105,7 +105,7 @@ class CarInterface(CarInterfaceBase):
 # PQ lateral tuning HCA_Status 7
       ret.lateralTuning.pid.kpBP = [0., 14., 35.]
       ret.lateralTuning.pid.kiBP = [0., 14., 35.]
-      ret.lateralTuning.pid.kpV = [0.11, 0.14, 0.16]
+      ret.lateralTuning.pid.kpV = [0.08, 0.15, 0.25]
       ret.lateralTuning.pid.kiV = [0.09, 0.10, 0.11]
       
       ret.stoppingControl = True
