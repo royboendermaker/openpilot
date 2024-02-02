@@ -32,7 +32,7 @@ class CarInterface(CarInterfaceBase):
     ret.radarOffCan = False
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
     ret.steerRateCost = 1.0
-    ret.steerActuatorDelay = 0.1  # Hopefully all racks are similar here
+    ret.steerActuatorDelay = 0.25  # Hopefully all racks are similar here
     ret.steerLimitTimer = 0.4
 
     # Override these per-car as necessary
