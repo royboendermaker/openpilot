@@ -31,8 +31,8 @@ class CarInterface(CarInterfaceBase):
     # Set global default parameters
     ret.radarOffCan = False
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
-    ret.steerRateCost = 1.0
-    ret.steerActuatorDelay = 0.25  # Hopefully all racks are similar here
+    ret.steerRateCost = 1.1
+    ret.steerActuatorDelay = 0.225  # Hopefully all racks are similar here
     ret.steerLimitTimer = 0.4
 
     # Override these per-car as necessary
@@ -40,7 +40,7 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kiBP = [0.]
     ret.lateralTuning.pid.kpV = [0.3]
     ret.lateralTuning.pid.kiV = [0.1]
-    ret.lateralTuning.pid.kf = 0.00006
+    ret.lateralTuning.pid.kf = 0.0000575
 
     # PER-PLATFORM PARAMETERS - DO NOT EDIT HERE TO TUNE INDIVIDUAL VEHICLES
 
@@ -83,8 +83,8 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 1.0
 
     elif candidate == CAR.GENERICPQ:
-      ret.mass = 1375 + STD_CARGO_KG  # Average, varies on trim/package
-      ret.wheelbase = 2.58
+      ret.mass = 1475 + STD_CARGO_KG  # Average, varies on trim/package
+      ret.wheelbase = 2.71
       ret.centerToFront = ret.wheelbase * 0.45  # Estimated
       ret.steerRatio = 16.4
       tire_stiffness_factor = 1.0
@@ -105,7 +105,7 @@ class CarInterface(CarInterfaceBase):
 # PQ lateral tuning HCA_Status 7
       ret.lateralTuning.pid.kpBP = [0., 14., 35.]
       ret.lateralTuning.pid.kiBP = [0., 14., 35.]
-      ret.lateralTuning.pid.kpV = [0.08, 0.15, 0.25]
+      ret.lateralTuning.pid.kpV = [0.08, 0.175, 0.195]
       ret.lateralTuning.pid.kiV = [0.09, 0.10, 0.11]
       
       ret.stoppingControl = True
@@ -174,7 +174,7 @@ class CarInterface(CarInterfaceBase):
     if True: #(self.frame % 100) == 0:
       if ret.cruiseState.enabled:
         self.pqCounter += 1
-      if self.pqCounter >= 12000*100: #time in seconds until counter threshold for pqTimebombWarn alert
+      if self.pqCounter >= 350*100: #time in seconds until counter threshold for pqTimebombWarn alert
         if not self.wheelGrabbed:
           events.append(create_event('pqTimebombWarn', [ET.WARNING]))
         if self.wheelGrabbed or ret.steeringPressed:
