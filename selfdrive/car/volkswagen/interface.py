@@ -164,10 +164,7 @@ class CarInterface(CarInterfaceBase):
 
     # Engagement and longitudinal control using stock ACC. Make sure OP is
     # disengaged if stock ACC is disengaged.
-    if not ret.cruiseState.enabled:
-      events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
-    # Attempt OP engagement only on rising edge of stock ACC engagement.
-    elif not self.cruise_enabled_prev:
+    if self.cruiseState.enabled:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
 
     ret.stopSteering = False
