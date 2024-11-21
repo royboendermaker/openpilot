@@ -122,6 +122,24 @@ class CarController():
 
     # --------------------------------------------------------------------------
     #                                                                         #
+    # Cancel ACC on minimum speed threshold                                   #
+    #                                                                         #
+    #                                                                         #
+    # --------------------------------------------------------------------------
+    ret.minEnableSpeed = 4.5
+    
+    if frame % P.GRA_STEP == 0:
+        
+    elif not self.cruise_enabled_prev:
+      events.append(create_event('pcmEnable', [ET.ENABLE]))
+
+    if ret.cruiseState.enabled and ret.vEgo < self.CP.minEnableSpeed:
+       self.graButtonStatesToSend = BUTTON_STATES.copy()
+       self.graButtonStatesToSend["Cancel"] = True
+    
+    can_sends.append(self.graButtonStatesToSend(self.packer_pt, CANBUS.pt, pcmEnable, ET.ENABLE, BUTTON_STATES, frame // 2))
+    # --------------------------------------------------------------------------
+    #                                                                         #
     # Prepare PQ_MOB for sending the braking message                          #
     #                                                                         #
     #                                                                         #
