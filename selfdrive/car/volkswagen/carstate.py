@@ -213,14 +213,38 @@ class CarState(CarStateBase):
  
     # Update ACC radar status.
     # FIXME: This is unfinished and not fully correct, need to improve further
-    ret.cruiseState.available = bool(pt_cp.vl["GRA_neu"]['Hauptschalter'])
-    ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
+    ret.cruiseState.available = True
+    
+    # Set override flag for openpilot enabled state.
+    if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
+      self.openpilot_enabled = True
+      self.univACCenabled = True
+    else:
+      if (ret.brakePressed):
+        self.univACCenabled = False
+
+    # Auto re-engage long after brake and > 15kmh
+    if (self.univACCenabled or self.univACCtempHold) and (ret.vEgo <= 4.5 or ret.brakePressed):
+      self.univACCtempHold = True
+    else:
+      if self.univACCtempHold:
+        self.univACCtempHold = False
+        self.univACCenabled = True
+
+    if self.univACCenabled and not pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2]:
+      ret.univACCenabled = True
+    else:
+      ret.univACCenabled = False
 
     # Update ACC setpoint. When the setpoint reads as 255, the driver has not
     # yet established an ACC setpoint, so treat it as zero.
     ret.cruiseState.speed = acc_cp.vl["ACC_GRA_Anziege"]['ACA_V_Wunsch'] * CV.KPH_TO_MS
     if ret.cruiseState.speed > 70:  # 255 kph in m/s == no current setpoint
       ret.cruiseState.speed = 0
+      
+    # Check if Brake pressed or speed < 15 kmh cancel OP ACC
+    if (ret.brakePressed) and (ret.cruiseState.speed <= 4.5 and self.openpilot_enabled):
+      self.openpilot_enabled = False
 
     # Update control button states for turn signals and ACC controls.
     self.buttonStates["accelCruise"] = bool(pt_cp.vl["GRA_neu"]['Kurz_Tip_up'])
