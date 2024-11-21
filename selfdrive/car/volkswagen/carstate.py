@@ -410,7 +410,10 @@ class CarState(CarStateBase):
       # The ACC radar is here on CANBUS.pt
       signals += [("ACA_V_Wunsch", "ACC_GRA_Anziege", 0)]  # ACC set speed
       checks += [("ACC_GRA_Anziege", 25)]  # From J428 ACC radar control module
-
+      if CP.enableBsm:
+        signals += PqExtraSignals.bsm_radar_signals
+        checks += PqExtraSignals.bsm_radar_checks
+        
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.pt)
 
   @staticmethod
@@ -436,5 +439,24 @@ class CarState(CarStateBase):
       # The ACC radar is here on CANBUS.cam
       signals += [("ACA_V_Wunsch", "ACC_GRA_Anziege", 0)]  # ACC set speed
       checks += [("ACC_GRA_Anziege", 25)]  # From J428 ACC radar control module
-
+      if CP.enableBsm:
+        signals += PqExtraSignals.bsm_radar_signals
+        checks += PqExtraSignals.bsm_radar_checks
+        
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.cam)
+
+class PqExtraSignals:
+  # Additional signal and message lists for optional or bus-portable controllers
+  fwd_radar_signals = [
+    ("ACA_StaACC", "ACC_GRA_Anziege", 0),           # ACC drivetrain coordinator status
+    ("ACA_V_Wunsch", "ACC_GRA_Anziege", 0),         # ACC set speed
+  ]
+  fwd_radar_checks = [
+    ("ACC_GRA_Anziege", 25),                        # From J428 ACC radar control module
+  ]
+  bsm_radar_signals = [
+    ("SWA_Infostufe_SWA_li", "SWA_1", 0),           # Blind spot object info, left
+    ("SWA_Warnung_SWA_li", "SWA_1", 0),             # Blind spot object warning, left
+    ("SWA_Infostufe_SWA_re", "SWA_1", 0),           # Blind spot object info, right
+    ("SWA_Warnung_SWA_re", "SWA_1", 0),             # Blind spot object warning, right
+  ]
